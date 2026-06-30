@@ -1,0 +1,58 @@
+# Platform Notes
+
+Load the relevant section after detecting the target stack. Prefer local project conventions over these defaults.
+
+## Flutter
+
+- Prefer existing widgets, theme extensions, design tokens, `TextTheme`, `ColorScheme`, spacing helpers, and asset wrappers.
+- Avoid raw `SizedBox(width/height: n)`, `EdgeInsets.all(n)`, raw `Color(0x...)`, and raw `TextStyle` when a project token exists.
+- Use adaptive layout primitives already present in the app. Otherwise prefer constraints, `SafeArea`, `LayoutBuilder`, `Flexible`, `Expanded`, scrollables, and text scaling-aware layout.
+- Check `pubspec.yaml`, `lib/theme`, `lib/core`, `lib/design_system`, `lib/shared`, generated localization, asset folders, and reusable screen examples.
+- Verify with `dart format`, `flutter analyze`, relevant widget tests, and screenshots/previews when available.
+- **Text fill gradient:** `ShaderMask` with `LinearGradient(...).createShader(bounds)`, or `TextStyle(foreground: Paint()..shader = …)`; transparent end stop for fades; do not approximate with one `color:`.
+
+## Android Kotlin / Jetpack Compose
+
+- Prefer existing composables, `MaterialTheme`, project theme wrappers, spacing/shape tokens, typography roles, and icon/image abstractions.
+- Avoid raw `dp`, raw colors, and raw text styles when project tokens exist. Small literal values are acceptable only for intrinsic platform constraints and must be justified.
+- Use `Modifier` chains consistent with the project. Respect insets, navigation bars, status bars, dynamic type, content descriptions, and touch target guidance.
+- Check modules such as `designsystem`, `ui`, `core-ui`, `theme`, `components`, `common`, and feature screen examples.
+- Verify with formatting, static analysis, Compose previews, screenshot tests, unit tests, or Gradle build tasks available in the repo.
+- **A box-shadow is not an elevation dp.** A designer `box-shadow` (offset, blur, spread, color%) does not map to one Material `elevation` / `Modifier.shadow(elevation)`: Material derives blur from a single dp with a fixed light direction and ignores explicit offset, spread, and color. Do not approximate `0 4 8 #000/5%` as "≈2dp." Reproduce the spec with `Modifier.shadow(elevation, shape, spotColor, ambientColor)` tuned to it, a `drawBehind` blur, or a project shadow helper — or flag it as an approximation, confirm at the decision gate, and verify visually.
+- **Text fill gradient → a `Brush`, not a colour token.** Apply `TextStyle(brush = …)` to a whole `Text`, or `SpanStyle(brush = …)` inside an `AnnotatedString` for one word; build the brush from the source's real direction and stops. Prefer a `Color.Transparent` terminal stop over a surface colour like `Color.White` — a transparent fade survives any surface and theme. Never flatten to one `color =`.
+
+## iOS SwiftUI
+
+- Prefer existing design tokens, `Color` assets, `Font` styles, view modifiers, reusable views, and asset catalog entries.
+- Avoid fixed frames as layout strategy. Use stacks, alignment guides, `Spacer`, `GeometryReader` only when justified, safe-area handling, Dynamic Type, and environment values.
+- Keep assets in asset catalogs and do not invent missing symbols. Use SF Symbols only when they are semantically correct or the user approves substitution.
+- Check `DesignSystem`, `Theme`, `Components`, `Resources`, `Assets.xcassets`, localization, and existing screen patterns.
+- Verify with SwiftFormat/SwiftLint if present, previews, unit/UI tests, simulator screenshots, or `xcodebuild` when available.
+- **Shadow mapping:** `.shadow(color:radius:x:y:)` honors color, offset, and blur (`radius ≈ blur / 2`) but has no spread — reproduce spread with an inset/background layer or flag it. Do not reduce a full box-shadow to a default `.shadow(radius:)`.
+- **Text fill gradient:** `Text(…).foregroundStyle(LinearGradient(…))`, or `.overlay(gradient).mask(Text(…))` for effects it cannot express. Use a `.clear` terminal stop, not a surface colour, so the fade survives any theme; do not reduce it to `.foregroundColor`.
+
+## iOS UIKit
+
+- Prefer existing view classes, style helpers, asset catalogs, typography helpers, and Auto Layout conventions.
+- Avoid manual frames unless the project intentionally uses them. Use constraints, layout guides, safe areas, Dynamic Type, and reusable style methods.
+- Check storyboard/xib usage before assuming code-only UI.
+- Verify with existing build/test/screenshot workflows.
+- **Text fill gradient:** mask a `CAGradientLayer` with the label's rendered text; do not collapse it to one `textColor`.
+
+## Kotlin Multiplatform / Compose Multiplatform
+
+- Determine whether the target screen belongs in shared Compose code, Android-specific code, iOS-specific code, or an expect/actual split.
+- Prefer shared design-system tokens and composables when the visual should be consistent across platforms.
+- Keep platform-specific insets, resources, fonts, and navigation behavior in the established project layer.
+- Avoid adding Android-only assumptions to common code.
+- Verify common code plus at least the relevant platform target when commands are available.
+- A shared text brush lives in common Compose exactly as the Compose case above — keep it in the shared design-system text style, not per platform.
+
+## Extending a shared component additively (all stacks)
+
+The safe extension is a **trailing optional parameter whose default reproduces current output**, appended so no call site re-binds positionally.
+- **Compose / Compose Multiplatform:** a `(@Composable () -> Unit)?` slot defaulting to `null` (render nothing when null), a `@Composable () -> Unit` slot defaulting to `{}`, or a value defaulting to the current constant.
+- **SwiftUI:** an extra `@ViewBuilder` closure or value defaulting to the present layout (e.g. `footer: () -> some View = { EmptyView() }`).
+- **Flutter:** a new optional named parameter (`Widget? footer`) defaulting to null/no-op.
+
+Changing an existing default, token, shape, or a modifier every caller inherits — or making an optional parameter required — is behavioral, not additive: revert and wrap screen-locally. Litmus: if any current caller's rendered output moves, it is behavioral. Confirm no existing slot or overload already covers the need before adding a new one — a new optional param is permanent shared surface area.

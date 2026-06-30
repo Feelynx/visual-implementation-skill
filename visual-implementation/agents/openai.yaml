@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visual Implementation"
+  short_description: "Turn design screenshots into risk-aware UI work"
+  default_prompt: "Use $visual-implementation to implement this mobile screen from a PNG or SVG using the project design system, surfacing risks and decisions before coding."
