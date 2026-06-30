@@ -48,6 +48,13 @@ Load the relevant section after detecting the target stack. Prefer local project
 - Verify common code plus at least the relevant platform target when commands are available.
 - A shared text brush lives in common Compose exactly as the Compose case above — keep it in the shared design-system text style, not per platform.
 
+## Full-bleed scroller within a padded screen (all stacks)
+
+A horizontal carousel inside a laterally-padded screen does NOT inherit the page gutter — it runs edge-to-edge with its OWN start/end inset while every sibling component keeps its lateral padding. A scroller that inherits the page padding clips its cards at the content edge and kills the peek.
+- **Compose / Compose Multiplatform:** a `LazyColumn` clips its items to the content area, so a negative-offset / negative-padding modifier to bleed one item past the parent `contentPadding` does NOT escape the clip. Deterministic fix: remove the list's horizontal `contentPadding`, give each non-carousel item its own lateral padding, and let the `LazyRow` span full width with `contentPadding = PaddingValues(horizontal = pageGutter)`. Give every fixed-width child `maxLines = 1` + `TextOverflow.Ellipsis` so a long title cannot wrap.
+- **Flutter:** the vertical scrollable carries no horizontal padding for the carousel row; the horizontal `ListView(scrollDirection: Axis.horizontal, padding: EdgeInsets.symmetric(horizontal: pageGutter))` owns its inset and other rows pad themselves. Fixed-width children use `maxLines: 1, overflow: TextOverflow.ellipsis`.
+- **SwiftUI:** the outer container leaves the carousel row un-padded; the inner horizontal `ScrollView` pads its content leading/trailing. Fixed-width children use `.lineLimit(1)`.
+
 ## Extending a shared component additively (all stacks)
 
 The safe extension is a **trailing optional parameter whose default reproduces current output**, appended so no call site re-binds positionally.

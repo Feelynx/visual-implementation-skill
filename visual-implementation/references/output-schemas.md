@@ -17,6 +17,7 @@ Source:
 - Apparent platform:
 - Token spec available (Figma styles/variables / inspect / redline): yes/no — if yes, list named tokens used
 - Screen state:
+- Frame set (when >1 frame): N frames → M screens; per screen, the state each frame encodes and the affordance that signals it (e.g. frame A = connected [trailing trash], frame B = pending [overflow])
 - Confidence:
 
 Layout regions:
@@ -34,9 +35,9 @@ Components:
   - State:
   - Text/content:
   - Icon/image needs:
-  - Container treatment (bare icon / icon-in-tile, fill, shape, border, elevation):
+  - Container treatment per icon (incl. inline glyphs nested in a text line / row — bare icon / icon-in-tile, fill, shape, border, elevation):
   - Typography role:
-  - Color role / text fill (solid token vs gradient brush — direction, stops, terminal-stop opacity):
+  - Color role / text fill (solid token vs gradient brush — direction, stops, terminal-stop opacity; provenance: stated colour token vs eyeballed estimate — flag meaning-bearing eyeballed hues for the gate):
   - Spacing intent:
   - Confidence:
 
@@ -239,10 +240,11 @@ Commands run:
 Render capture:
 - Method:
 - Dimensions/theme matched:
+- Baseline (existing screens): agent-rendered / user-supplied screenshots / code-only (flag as verification risk)
 
 Visual comparison (element x property delta table):
 - Element | Property | Source value | Implemented value | Verdict (match/minor/major) | Confidence
-  (property rows per element: copy [per locale], type role/size/weight (provenance: stated token vs pixel estimate), per-line/per-span color, text fill type (solid vs gradient/brush), each gap & inset, radius, border, shadow/elevation spec, fill, icon identity/orientation, icon size, icon inner padding, container chrome, presence/position, state coverage, occluded/provisional, component placement & reuse, shared-change blast radius)
+  (property rows per element: copy [per locale], type role/size/weight (provenance: stated token vs pixel estimate), per-line/per-span color (provenance: stated token vs eyeballed estimate), text fill type (solid vs gradient/brush), each gap & inset, radius, border, shadow/elevation spec, fill, icon identity/orientation, icon size, icon inner padding, container treatment (every icon incl. inline glyph), sibling consistency, presence/position (union of analysis + build elements; build-only = remove), state coverage, overflow/truncation (width-constrained text), occluded/provisional, component placement & reuse, shared-change blast radius)
 - Design-system compliance:
 - Remaining asset gaps:
 

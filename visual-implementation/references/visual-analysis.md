@@ -9,6 +9,10 @@ Protocols for extracting reliable design intent from a visual source. The source
 - **Mixed:** SVG with an embedded `<image>` base64 = vector chrome plus a raster asset. A PDF or Figma link is neither — ask for an exported SVG or PNG.
 - **Named-token spec (outranks vector and raster):** a Figma styles/variables panel, an inspect/redline export, or a values table that *names* design values (type style, spacing variable, radius token). When present it is the highest-priority source: map source token → project token directly and do not re-derive that value from pixels or path coordinates; parse the SVG / estimate the raster only for geometry the tokens do not cover. A bare Figma link with no exported spec is not this — ask for the token names or the inspect panel before falling back to measurement.
 
+## 0.5 Reconcile a frame set into screens × states (before analyzing any single frame)
+
+Multiple provided frames are often one screen in different states, not separate screens. Diff the frames pairwise first: identical structure differing only in a trailing control, status line, or copy means *state variants of one screen* — analyze that screen once with a state column, mapping each variant to the state its differing affordance encodes (trailing trash = connected/removable; overflow / 3-dots = request pending; a "received" line = incoming, awaiting your action). Only genuinely different structure makes a frame a distinct screen. Derive the screen set from the frames, never from the existing code.
+
 ## 1. SVG branch — parse, do not eyeball
 
 Read the raw SVG as text and extract exact values, not impressions:
@@ -89,13 +93,17 @@ In KMP/Compose Multiplatform, shared drawables live in `commonMain/composeResour
 Split three layers before analyzing layout; do not stop after discarding the OS layer:
 - **OS chrome — discard:** status bar, notch / dynamic island, home indicator, system nav bar, keyboard. Never reproduce the clock / battery as app UI. Map its space to safe-area insets, not fixed offsets.
 - **App chrome — inventory:** the app's own top bar / nav bar / toolbar and every action it holds (back, info, overflow, search, avatar, close), plus FABs and bottom-bar items. This is app content; list each as a component, not decoration.
-- **Container treatment per control:** record the container, not just the glyph — bare icon vs icon-in-tile (circle / pill / rounded square), fill + opacity, shape, border, size, elevation. An icon on a filled tile and a transparent icon button are different components; defaulting to a borderless icon button silently deletes the tile.
+- **Container treatment per icon (chrome and body):** record the container, not just the glyph, for *every* icon in the frame — bare icon vs icon-in-tile (circle / pill / rounded square), fill + opacity, shape, border, size, elevation. This is not a chrome-only check: a colored tile sits behind an inline glyph in a text line (a direction arrow in a date row), behind an icon inside a card, row, chip, or list item, exactly as behind a toolbar action — scan body icons with the same eye. Defaulting any small glyph, inline or chrome, to a borderless icon silently deletes the tile.
+
+## 7.5 Sibling consistency across same-class containers
+
+When the screen shows more than one of a container class (cards, rows, list items, tiles), read their chrome as ONE spec, not per instance — derive the canonical background, border, elevation, radius, and content typography from the established instances and hold every other instance, including any you will add, to it. Two cards on one screen with different fills, borders, or elevations is almost always a defect to reconcile, not two intended styles; flag a deliberate differentiation at the decision gate, else match the siblings.
 
 ## 8. What a static image cannot tell you (feed the decision gate)
 
 A single frame hides most of the screen's behavior. For each item, either infer it from project patterns or raise it at the decision gate:
-- **Interaction states:** pressed / hover / focus / disabled / selected / error.
-- **Off-screen content:** scroll position, what sits above / below the fold, sticky vs scrolling regions, carousels (peeking edges).
+- **Interaction states:** pressed / hover / focus / disabled / selected / error. A multi-frame set often supplies these directly: two otherwise-identical frames differing only in a trailing control, status line, or copy are one screen in two states, and the differing affordance *names* the state. States a frame actually shows are **observed truth** — render and match each against its own frame; states no frame shows stay inferred. Never split state variants into separate screens, nor collapse them and silently drop a state.
+- **Off-screen content:** scroll position, what sits above / below the fold, sticky vs scrolling regions, carousels (peeking edges). A card flush to the screen edge or peeking past the page gutter is ambiguous — a **full-bleed scroller that owns its own start/end inset** (running past the page padding) vs a card simply meeting the content edge — and one frame cannot decide which. Record each scrolling region's gutter model (page-padded vs full-bleed-with-own-contentPadding); a full-bleed scroller breaks the page's lateral-padding rhythm, so resolve the ambiguity with a restate-and-ASCII-sketch confirmation before coding, not a guess.
 - **Motion:** transitions, animations, gesture affordances.
 - **Copy reality:** real content vs placeholder / lorem; localized strings.
 - **Truncation / occlusion — run the cut-source protocol.** Text cut at the frame edge, content behind a sheet/modal/keyboard, or a region cropped away.
@@ -103,7 +111,7 @@ A single frame hides most of the screen's behavior. For each item, either infer 
   2. Transcribe verbatim only fully-visible copy, and measure only the on-frame fragment of a partial element (its leading inset, icon, first label). Never extrapolate a partial element's full width, height, item count, or hidden copy from the visible slice — a half-row is not a measurement of a whole row.
   3. Diagnose the cut before reacting: a **capture artifact** (the full element exists off-frame — request an un-cropped/scrollable export) versus an **intentional peek** signalling scroll (the cut *is* the spec — reproduce the partial reveal, do not pad it into a full item).
   4. Route every partial or hidden element to the decision gate flagged provisional: request the rest of the frame, ship explicitly-flagged provisional content the user confirms, or omit it this pass — never invent hidden copy or structure and present it as observed.
-- **Data variability:** long names, large numbers, empty / loading / error states.
+- **Data variability & width-constrained overflow:** long names, large numbers, empty / loading / error states — and, for text inside a fixed-width or space-shared container (carousel card, fixed tile, a label sharing its row with a trailing control), the overflow policy the single sampled string hides. The frame shows one length that happens to fit; decide single-line + ellipsis, a stated max-line cap, or intentional wrap, and verify with a deliberately long value. Width-constrained text with no `maxLines` + overflow set is the default failure — an address wrapping to a second line inside a fixed card is a defect, not the layout.
 - **Variants:** light / dark theme, RTL, dynamic type / font scaling.
 
 ## 9. Confidence calibration
