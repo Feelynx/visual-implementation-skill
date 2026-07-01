@@ -76,6 +76,7 @@ A "maps app" screen — full map, a search field, and a results sheet that drags
 - Inside the box, use the raw `BottomSheetScaffold` (not the project wrapper, when you need `sheetShape`) with the map as `content` (fillMaxSize, behind) and the results as `sheetContent`.
 - For the expanded state to reach the top of the box, the sheet content must fill height — a `LazyColumn(Modifier.fillMaxSize())`, NOT a `verticalScroll` `Column`: `verticalScroll` + `fillMaxSize` conflict (scroll relaxes height to infinity, so `fillMaxSize` can't fill).
 - Read `scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded` to make the sheet flush when expanded: drop the drag handle and the top-corner radius so it reads like the plain list; restore them when partial.
+- **State-dependent content inside the sheet.** A message state (no-results) shown in the sheet must be **top-anchored and its peek measured**, not centred in `fillMaxSize`: a centred message reads full-screen when the sheet is expanded but is invisible at the collapsed peek (the peek shows the top of the sheet; the centred content is below the fold, so you see only the drag handle over blank space). Top-anchor the message and derive the peek height from its measured block so it is visible collapsed and still reads full when expanded — one layout must satisfy every sheet state.
 
 ## Size a reveal from measured content, not a magic number (Compose)
 
