@@ -22,6 +22,11 @@ Visual work is not complete until one of these is true:
 6. **Iterate.** Fix every *major* mismatch and every unmitigated high-severity risk, re-render, re-compare. Repeat until converged or genuinely blocked.
 7. **Wiring check (only when this task connected a component to one or more triggers).** Exercise every entry point and confirm each reaches the component — the sheet opens, the route navigates, the state flips. A shared event means all entry points must fan into it, so one verified trigger does not prove the rest: test the ones you did not touch, including pre-existing paths you added no wiring to because it already existed.
 
+## Rendering etiquette & build truth
+
+- **The user's device/emulator is often shared and mid-review.** Read-only screenshots are fine, but do not *drive* it — tapping, typing, swiping, or navigating disrupts their session and can lose their place. Ask before driving it, or wait for an explicit "it's free." When you must reach a state, prefer your own render harness (Compose/SwiftUI preview, an isolated-component capture) over hijacking their live session.
+- **Confirm the build actually succeeded before committing or claiming done.** A background job's exit code or a truncated log is not proof: grep the real output for `BUILD SUCCESSFUL` and zero `e:` / `error:` lines. Committing on an assumed-green build ships a broken commit you then amend — the compile is part of verification, run it *before* the commit, not after.
+
 ## Element × property delta table (gate before any "match")
 
 Build one table per screen. Every element from the screen analysis is a row group; every property below is a row scored **source value | implemented value | verdict (match / minor / major) | confidence**. An element is **not** "match" until every property row is filled against the token-mapped source value — not a re-invented literal, not the existing code. Fixing only the deltas you happened to notice is not an audit. The table covers every element from the analysis, including regions you did not edit this pass.

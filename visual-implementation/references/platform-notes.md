@@ -47,6 +47,7 @@ Load the relevant section after detecting the target stack. Prefer local project
 - Avoid adding Android-only assumptions to common code.
 - Verify common code plus at least the relevant platform target when commands are available.
 - A shared text brush lives in common Compose exactly as the Compose case above — keep it in the shared design-system text style, not per platform.
+- **Compile the actual platform target to validate bindings, even when the full app can't run on this host.** `./gradlew :<module>:compileKotlinIosSimulatorArm64` (or the XCFramework task) type-checks Kotlin/Native UIKit / Foundation / CoreLocation bindings without a Mac app build. They do NOT map 1:1 to the Obj-C headers — a property such as `popoverPresentationController` may be absent from the binding, and `keyWindow` is deprecated-but-present. Hold platform delegates/callbacks in a strong property (`CLLocationManagerDelegate`, the presenting VC for `UIActivityViewController`) or K/N collects them before the async callback fires. Compiling proves the bindings resolve; runtime behavior still needs a device/simulator, so flag it as such.
 
 ## Full-bleed scroller within a padded screen (all stacks)
 
@@ -63,3 +64,19 @@ The safe extension is a **trailing optional parameter whose default reproduces c
 - **Flutter:** a new optional named parameter (`Widget? footer`) defaulting to null/no-op.
 
 Changing an existing default, token, shape, or a modifier every caller inherits — or making an optional parameter required — is behavioral, not additive: revert and wrap screen-locally. Litmus: if any current caller's rendered output moves, it is behavioral. Confirm no existing slot or overload already covers the need before adding a new one — a new optional param is permanent shared surface area.
+
+The default must reproduce current output **exactly**, not merely be optional, and the wiring must reach every variant of the symbol:
+- **True no-op default, not a plausible-looking one.** An icon-tint param defaults to the current content colour (Compose `LocalContentColor.current`), NOT `Color.Unspecified` — the latter drops tinting and repaints every existing caller. The default is whatever the code renders *today*, read from the code, not the neutral-looking value.
+- **Apply to every overload/variant.** A shared component often has several overloads (value: `String` / `TextFieldValue`, with/without chevron). A param declared on one overload but left unwired in a sibling overload's render is a silent no-op that ships a lie. After adding, grep every overload and confirm the new param actually reaches the pixels in each — compiling clean is not the same as being wired.
+
+## Map with a draggable results bottom sheet (Compose)
+
+A "maps app" screen — full map, a search field, and a results sheet that drags up over the map — is NOT one `BottomSheetScaffold` with the search in its `topBar`: at full expansion that sheet covers the search too. Structure it so the sheet lives only *below* the fixed header:
+- A `Column`: the app bar + search field are fixed children at the top; the map + sheet go in a `Box(Modifier.weight(1f))` below them, so the sheet expands only within that box, never over the search.
+- Inside the box, use the raw `BottomSheetScaffold` (not the project wrapper, when you need `sheetShape`) with the map as `content` (fillMaxSize, behind) and the results as `sheetContent`.
+- For the expanded state to reach the top of the box, the sheet content must fill height — a `LazyColumn(Modifier.fillMaxSize())`, NOT a `verticalScroll` `Column`: `verticalScroll` + `fillMaxSize` conflict (scroll relaxes height to infinity, so `fillMaxSize` can't fill).
+- Read `scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded` to make the sheet flush when expanded: drop the drag handle and the top-corner radius so it reads like the plain list; restore them when partial.
+
+## Size a reveal from measured content, not a magic number (Compose)
+
+When the design says "the collapsed sheet shows exactly one card" (or a peek reveals a specific element), compute the size at runtime instead of hardcoding a dp. Measure the pieces with `Modifier.onGloballyPositioned { it.size.height }` (drag handle + header + first item; or the whole no-results block), sum them, and drive `sheetPeekHeight` from a state you set in those callbacks — with a small first-frame fallback until measured. Measuring intrinsic `size.height` is stable and does not feed back through the sheet position: the internal distance between two elements inside the same sheet is invariant to the sheet's offset. A fixed peek breaks on the first longer string, larger font scale, or denser card.

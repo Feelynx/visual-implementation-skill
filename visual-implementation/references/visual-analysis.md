@@ -73,6 +73,7 @@ Classify each visual element, because misclassifying either wastes work or loses
 - **Logo / brand mark** → asset; never recreate in code unless the user approves.
 - **Icon** → project icon set, SF Symbols, or icon-font glyph when semantically correct; otherwise an asset.
 - **Simple shape / divider / gradient / badge** → compose from primitives and tokens.
+- **Dense illustration / map / textured background** → a **raster asset the user exports from the design tool**, not something you redraw or rasterize yourself. Do NOT convert a large multi-path SVG (a city map, a detailed illustration) to a vector drawable — it balloons to megabytes of path nodes and renders slowly. Do NOT rasterize the SVG with a thumbnail/QuickLook tool — it distorts aspect, crop, and colour. The design already has the exact export: **ask for the PNG (1x / 2x / 3x)**. An overlay effect *on top* of that raster (a white→transparent fade to blend it into the page) IS yours to compose in code with a `Brush` / gradient — you don't need a second exported asset for the fade.
 
 When unsure whether something is an asset or drawable → decision gate.
 
