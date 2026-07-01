@@ -30,6 +30,11 @@ The hard rules, grouped by the failure each one prevents. The authoritative list
 - **Don't trust prior fidelity claims** — a commit message, a comment, or a "1:1" note. Re-derive every visible property from the source.
 - **An element is correct only after every property is checked** against the token-mapped source value: copy (per locale), type size/weight/line-height and per-run color/fill, gaps and insets, radius, border, shadow, icon identity/orientation, container chrome, presence, and state.
 
+## Serve the user, not the container
+
+- **Overflow is a communication problem, not a layout one.** Don't resolve it by truncating — ellipsis, fade, `maxLines` clipping, or shrinking copy hides information from the user. Ask what the label must convey, then reflow so the full string stays readable: stack the label above its trailing controls (a two-line row), wrap, or give it its own line, before you ever clip it. Truncation is a last resort named at the gate, never applied to the one datum the screen exists to show. Reaching for ellipsis is the tell that you're solving the constraint instead of the user's need.
+- **Question redundant chrome.** A label, tag, or chip that restates what another element on the same screen already says — a "focus" pill naming the same item an on-top "next step" summary names, both from the same computed value — is redundant, and dropping it can dissolve a layout constraint instead of fighting it. Confirm the duplication in code, route the removal through the gate as a two-direction diff item, and never infer redundancy from the visual alone.
+
 ## Communication
 
 - **Conduct the interaction in the user's language**, and surface difficulties as a user-facing risk ledger before asking decisions or writing code.
