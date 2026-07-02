@@ -9,7 +9,7 @@ Identify file type, dimensions, platform, density, theme, and screen state. Clas
 Describe regions, hierarchy, components, typography, color, states, imagery, and copy. Record what a static image *cannot* show (states, off-screen content, motion, real vs placeholder copy, occlusion, variants). For an **existing screen**, render and capture the *current build* first and diff it against the source — the mismatches are the task list.
 
 ### 3. Scan the project
-Detect the stack. Search for tokens, themes, typography, color roles, spacing scales — **and** structural components (sheets, scaffolds, rows, list items, cards). Locate the render/capture path; if none exists, that is a verification risk to raise now.
+Detect the stack. Search for tokens, themes, typography, color roles, spacing scales — **and** structural components (sheets, scaffolds, rows, list items, cards). Regulated copy (legal, consent, medical) is searched before it is drafted — a validated multi-locale translation usually already exists in a mirror flow. Locate the render/capture path; if none exists, that is a verification risk to raise now.
 
 ### 4. Surface the Agent Difficulty Report
 Translate every uncertainty into a routed risk: what is hard, the failure mode if unchecked, confidence, severity, owner, mitigation, and destination.

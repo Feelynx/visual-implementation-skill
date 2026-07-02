@@ -23,7 +23,7 @@ Per-stack idioms for Flutter, Android Compose, SwiftUI, UIKit, and Kotlin/Compos
 The render-and-compare gate: baseline first for existing screens, render *your* build, and complete the **element × property delta table** (copy, type with provenance, fill type, gaps/insets, radius/border/fill, shadow, icon identity, container chrome, placement/reuse, occluded items, shared-change blast radius). Includes the wiring check and the isolated-component render fallback.
 
 ## [`failure-cases.md`](../visual-implementation/references/failure-cases.md)
-The costliest real-session failures, each generalized into a non-negotiable and kept with its full reasoning: Bold-by-default, the near-token trap, the state × layout-mode grid, measured placement in stateful containers, the permission tri-state, overflow as a communication problem, and redundant chrome. `SKILL.md` cites a case by number (e.g. NN-8 → case #1); read the case when its trigger appears in the task.
+The costliest real-session failures, each generalized into a rule and kept with its full reasoning: Bold-by-default, the near-token trap, the state × layout-mode grid, measured placement in stateful containers, the permission tri-state, overflow as a communication problem, redundant chrome, and re-drafted regulated copy. `SKILL.md` cites a case by number (e.g. NN-8 → case #1); read the case when its trigger appears in the task.
 
 ## [`worked-example.md`](../visual-implementation/references/worked-example.md)
 An end-to-end pass — source → analysis → risk ledger → decision gate → brief → verification — as a concrete model to follow.

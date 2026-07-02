@@ -1,6 +1,6 @@
 # Platform Notes
 
-Load the relevant section after detecting the target stack. Prefer local project conventions over these defaults.
+Load the relevant section after detecting the target stack, **plus the cross-cutting sections after the per-stack ones** ("Full-bleed scroller…", "Extending a shared component additively…", and the Compose sheet patterns) — they apply on top of every stack and are the ones a stack-only read misses. Prefer local project conventions over these defaults.
 
 ## Flutter
 
