@@ -70,7 +70,7 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
 1. **Intake the visual source**
    - Identify file type, dimensions, apparent platform, density, orientation, theme mode, system UI visibility, and screen state.
    - Classify the source kind — named-token spec / vector / raster / mixed — and calibrate scale before measuring anything; unknown density or scale goes to the decision gate. (`references/visual-analysis.md` §0–3)
-   - Ask whether a named-token spec exists (Figma styles/variables, an inspect/redline export, a values table) and request token names rather than measuring them (NN-4). Record its absence as a verification risk for the Agent Difficulty Report.
+   - Ask whether a named-token spec exists (Figma styles/variables, an inspect/redline export, a values table) and request token names rather than measuring them (NN-4) — fetching them yourself first when the session has a Figma MCP/API connection (`references/visual-analysis.md` §0). Record the spec's absence as a verification risk for the Agent Difficulty Report.
    - If the source is missing or unreadable, request a usable PNG/SVG/screenshot before proceeding.
    - Set your response language to the user's request language now (NN-1), before emitting any analysis.
 
