@@ -100,6 +100,9 @@ visual-implementation/
 ├── SKILL.md                      # the skill contract: non-negotiables + workflow
 ├── agents/
 │   └── openai.yaml               # runtime manifest (display name, prompt)
+├── scripts/
+│   ├── capture.sh                # read-only device/simulator screenshot
+│   └── compare.sh                # scale + side-by-side + pixel diff
 └── references/
     ├── visual-analysis.md        # extracting design intent from a source
     ├── output-schemas.md         # the structured artifacts each phase emits

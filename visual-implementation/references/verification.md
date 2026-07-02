@@ -13,9 +13,9 @@ Visual work is not complete until one of these is true:
 **Baseline first (existing screens).** Before editing, capture the current screen as *pixels* — render it yourself, or ask the user for current app screenshots — and run the delta table below against the source, treating the current build as a second, untrusted input. Never reconstruct the current state from code: an extra control or a leftover gap renders but does not announce itself in source. Diff in **both directions**: add what the frame shows and the build lacks, AND remove what the build still shows but the frame dropped (a stale status chip, a leftover segmented toggle, a top-padding refuso) — a removal is a delta. The mismatches are the work — all of them, not the two or three you noticed first; the post-change capture must clear every one. The same table runs at both ends — render only at the end and the user finds the defects instead of you.
 
 1. **Render YOUR built screen** (not the source export) with whatever the project supports: Compose / SwiftUI preview, simulator / emulator, golden / screenshot test, or a debug build.
-2. **Capture** a screenshot at the **same logical dimensions, device, and theme** as the source. Matching the frame is what makes the comparison valid.
+2. **Capture** a screenshot at the **same logical dimensions, device, and theme** as the source. Matching the frame is what makes the comparison valid. `scripts/capture.sh` does the read-only capture (adb / booted simulator).
 3. **Compare** the capture against the source:
-   - Side-by-side at equal size; overlay / diff if the tooling allows it.
+   - Side-by-side at equal size; overlay / diff if the tooling allows it. `scripts/compare.sh <capture> <source.png>` scales the capture to the source width and, with ImageMagick, emits the side-by-side sheet and a pixel diff — support material for the table, never a substitute for re-reading the images.
    - Complete the element × property delta table below.
 4. **Reconcile the Agent Difficulty Report.** For every risk carried into the brief, mark it mitigated, accepted as a limitation, or still open with evidence.
 5. **Self-review multimodally.** Actually re-read your captured screenshot as an image and compare it to the source image — do not infer fidelity from the code diff.
