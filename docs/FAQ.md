@@ -7,7 +7,7 @@ Whenever you implement or review a mobile UI from an external visual source — 
 It is strongest with one, because it maps to tokens and components. Without one it still applies the workflow, but more values fall back to measured, declared-uncertainty estimates — and it will flag the absence as a risk.
 
 ### Why does it ask for Figma tokens instead of measuring?
-Because a stated token gives size, weight, and line-height exactly, while a pixel measurement is biased — character advance width is font-specific, so a real 16sp run can measure like 14sp. The token is ground truth; the ruler is a fallback.
+Because a stated token gives size, weight, and line-height exactly, while a pixel measurement is biased — character advance width is font-specific, so a real 16sp run can measure like 14sp. The token is ground truth; the ruler is a fallback. And when the session has a programmatic Figma connection (MCP server or API), the skill fetches the tokens itself before asking you at all.
 
 ### Why won't it just trust the existing code?
 A "1:1" claim — in a commit message, a comment, or the current implementation — is a claim to verify, not evidence. The skill re-derives every visible property from the source and proves the result by rendering.
