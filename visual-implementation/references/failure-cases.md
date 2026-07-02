@@ -11,6 +11,7 @@ The costliest real-session failures, each generalized into a non-negotiable. Eve
 | 5 | Permission results are a tri-state | the flow requests any runtime permission |
 | 6 | Overflow is a communication problem | a label collides with fixed trailing widgets or a fixed-width container |
 | 7 | Redundant chrome | an element restates information already shown elsewhere on the same screen |
+| 8 | Re-drafted regulated copy | the screen introduces legal, consent, medical, or policy copy |
 
 ## 1. Bold-by-default
 
@@ -69,3 +70,11 @@ The costliest real-session failures, each generalized into a non-negotiable. Eve
 **The failure:** treating every element the source shows as load-bearing. Redundant chrome can be dropped — and dropping it can dissolve a layout constraint (case 6) instead of fighting it — but only when the redundancy is real.
 
 **The rule:** confirm the duplication **in code** (the same derived value, not a lookalike) and route the removal through the decision gate as a two-direction diff item. Never drop content the user still needs, and never infer redundancy from the visual alone.
+
+## 8. Re-drafted regulated copy
+
+**Symptom:** a redesign introduces legal, consent, or medical copy, and the pass drafts it fresh in every locale — N new translations of wording that was already validated elsewhere in the app.
+
+**The failure:** treating regulated copy as new content. A mirror or sibling flow — the accept side of a request you send, the opposite end of the same action, a settings screen stating the same policy — almost always already carries the SAME disclaimer, translated and validated across every locale.
+
+**The rule:** `rg` the project's strings for the existing disclaimer first; adapt only the clause that differs (e.g. "by accepting the connection" → "by sending the request") and reuse the rest verbatim, instead of re-drafting legal text in N languages. Reuse lowers the risk but does not remove the sign-off — the final wording still goes to the decision gate.

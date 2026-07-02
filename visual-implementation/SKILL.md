@@ -69,61 +69,50 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
 
 1. **Intake the visual source**
    - Identify file type, dimensions, apparent platform, density, orientation, theme mode, system UI visibility, and screen state.
-   - Classify the source as vector (SVG) or raster (PNG/JPG/screenshot). The type decides the method: parse the SVG source for exact values; estimate raster perceptually with declared confidence.
-   - Calibrate scale before measuring: establish the reference frame (SVG `viewBox`, or raster device width plus scale factor). If density or scale is unknown, take it to the decision gate.
-   - Use `references/visual-analysis.md` for the source-type branch and calibration.
-   - Before measuring, ask whether a named-token spec exists (Figma styles/variables, an inspect/redline export, or a values table); for a Figma export, request the type/spacing/radius token names rather than measuring them. Record whether a token spec was provided — its absence is itself a verification risk to route to the Agent Difficulty Report.
-   - If the visual source is missing or unreadable, request a usable PNG/SVG/screenshot before proceeding.
-   - Set your response language to the user's request language now (NN-1) before emitting any analysis.
+   - Classify the source kind — named-token spec / vector / raster / mixed — and calibrate scale before measuring anything; unknown density or scale goes to the decision gate. (`references/visual-analysis.md` §0–3)
+   - Ask whether a named-token spec exists (Figma styles/variables, an inspect/redline export, a values table) and request token names rather than measuring them (NN-4). Record its absence as a verification risk for the Agent Difficulty Report.
+   - If the source is missing or unreadable, request a usable PNG/SVG/screenshot before proceeding.
+   - Set your response language to the user's request language now (NN-1), before emitting any analysis.
 
 2. **Analyze the complete screen**
-   - Describe layout regions, hierarchy, navigation structure, content groups, component candidates, typography roles, color roles, interaction states, imagery, iconography, and visible copy.
-   - Include approximate relationships such as relative emphasis, density, grouping, alignment, and spacing rhythm. Avoid turning these into hardcoded sizes.
-   - Apply the extraction protocols in `references/visual-analysis.md` (color, typography, asset-vs-drawable, system chrome) and record what a static image cannot show: states, off-screen content, motion, real vs placeholder copy, occlusion, and data/theme variants.
-   - Use `references/output-schemas.md` for the required screen analysis shape.
-   - **Existing-screen / redesign / "make it 1:1" branch:** when the target screen already exists, the baseline is a *pixel capture*, never a reading of the code — render and capture the current build, or if you cannot render it, ask the user for current app screenshots; never reconstruct the current layout from code. Run the delta table in `references/verification.md` against the source, treating the current build as a second, untrusted input whose mismatches are your task list — not the two or three you noticed first. Diff in **both directions**: add what the frame shows and the build lacks, AND remove what the build still shows but the frame dropped (a stale status chip, a leftover segmented toggle, a top-padding refuso) — a removal is a delta. If you can neither render nor obtain screenshots, you can neither baseline nor verify — raise it at the decision gate now, not after implementing.
+   - Describe layout regions, hierarchy, navigation structure, content groups, component candidates, typography roles, color roles, interaction states, imagery, iconography, and visible copy — as relationships and rhythm (emphasis, density, grouping, alignment), not hardcoded sizes.
+   - Apply the extraction protocols in `references/visual-analysis.md` (color, typography, asset-vs-drawable, system chrome) and record what a static image cannot show: states, off-screen content, motion, real vs placeholder copy, occlusion, data/theme variants (§8).
+   - Emit the screen analysis schema from `references/output-schemas.md`.
+   - **Existing-screen / redesign / "make it 1:1" branch:** the baseline is a *pixel capture* of the current build — rendered by you or supplied by the user — never a reading of the code. Run the delta table against the source, diffing in both directions; the mismatches are your task list. If you can neither render nor obtain screenshots, you can neither baseline nor verify — raise it at the gate now, not after implementing. (`references/verification.md`, "Baseline first")
 
 3. **Scan the project before designing anything**
    - Detect stack and UI layer: Flutter, Android Compose, SwiftUI/UIKit, KMP/Compose Multiplatform, or mixed.
-   - Search for design tokens, themes, typography, color roles, and spacing scales — and, with equal weight, the project's structural/container components: modal bottom sheets and sheet hosts, dialogs, screen scaffolds, list items, rows, section/info cards, accordions, and chips — plus screen examples, asset catalogs, icon sets, localization, and navigation patterns. A sheet, scaffold, row, or list item is as reusable as a token and as costly to rebuild by hand. Grep by structure, not only by name (e.g. `rg -l 'BottomSheet|Sheet|Scaffold|ListItem|Row|SectionCard|Accordion|Dialog'`), and read the hits before concluding any region needs new structure. A create-new decision is valid only after reuse is ruled out across every component kind, not just tokens and buttons.
+   - Search design tokens, themes, typography, color roles, and spacing scales — and, with equal weight, structural components (sheets, dialogs, scaffolds, list items, rows, cards, accordions, chips), plus screen examples, asset catalogs, icon sets, localization, and navigation patterns. Grep by structure, not only by name (e.g. `rg -l 'BottomSheet|Sheet|Scaffold|ListItem|Row|SectionCard|Accordion|Dialog'`), and read the hits; a create-new decision is valid only after reuse is ruled out across every component kind (NN-14).
    - Prefer `rg`/fast project search. Cite concrete files and symbols in the implementation brief.
-   - When the redesign introduces legal, consent, medical, or otherwise regulated copy that a naive pass would draft fresh across every locale, first `rg` the project's strings for the SAME disclaimer already carried by a mirror or sibling flow — the accept side of a request you send, the opposite end of the same action, a settings screen stating the same policy. A validated multi-locale translation of regulated wording almost always already exists; adapt only the clause that differs (e.g. "by accepting the connection" → "by sending the request") and reuse the rest verbatim, instead of re-drafting legal text in N languages. Reuse lowers the risk but does not remove the sign-off — still route the final wording to the decision gate.
-   - Locate the **render / capture path** while scanning — Compose/SwiftUI preview, simulator/emulator, screenshot/golden test, or a debug build. If none exists, raise it as a verification risk in the Agent Difficulty Report at intake and route it to the decision gate, instead of discovering it after implementing with the visual gate left open across the whole task.
+   - Regulated copy (legal, consent, medical) is searched before it is drafted — a validated multi-locale translation almost always already exists in a mirror or sibling flow. (`references/failure-cases.md` #8)
+   - Locate the **render / capture path** now — preview, simulator/emulator, screenshot/golden test, or debug build. If none exists, raise it as a verification risk at intake instead of discovering it after implementing.
 
 4. **Surface the agent difficulty report**
-   - Produce the Agent Difficulty Report schema from `references/output-schemas.md` after the screen analysis and project scan, before the decision gate and before implementation.
-   - List the places where you are likely to struggle, not only the places where the user must act. Cover source uncertainty, project mismatch, missing assets, unknown behavior, token gaps, accessibility/data variability, and verification risk.
-   - For each difficulty, state the likely failure mode if unchecked, confidence, severity, owner (`agent`, `user`, or `project`), mitigation, and destination: decision gate, implementation brief, or verification focus. Cite the non-negotiable at stake (NN-x) where one applies.
-   - Treat "I can approximate this" as a risk, not a resolution, when it affects fidelity, reuse, accessibility, localization, brand correctness, or future maintainability.
+   - Produce the Agent Difficulty Report schema from `references/output-schemas.md` after analysis and scan, before the decision gate and before implementation.
+   - List where you are likely to struggle, not only where the user must act: source uncertainty, project mismatch, missing assets, unknown behavior, token gaps, accessibility/data variability, verification risk.
+   - Per difficulty: likely failure mode if unchecked, confidence, severity, owner (`agent`/`user`/`project`), mitigation, destination (decision gate / implementation brief / verification focus), and the NN-x at stake where one applies.
+   - "I can approximate this" is a risk, not a resolution, when it affects fidelity, reuse, accessibility, localization, brand correctness, or maintainability (NN-24).
 
 5. **Map visual elements to project primitives**
-   - For each region or component, choose one of: reuse existing component, adapt a near match, compose from existing primitives, create a new component, or ask for an asset/decision. Collapse a repeated visual structure (several identical icon+title+subtitle rows, a list of identical cards) into a single component candidate — repetition is itself the signal it should be one reusable component, not N ad-hoc elements.
-   - When a new component is genuinely needed, decide its home before its code. A repeatable structure, or a design-system-grade value (a measurement that snaps cleanly to the project grid, e.g. a multiple of 8), marks it reusable: stop at the decision gate and create it centralized in the design system under an agreed name. Never ship a reusable component as a screen-local private helper; build a local one-off only for a genuinely single-use, non-tokenized shape that will never repeat.
-   - Explain why new components are necessary when they are necessary.
-   - Record confidence per area as high, medium, or low.
-   - Connect each low-confidence or high-impact mapping choice to the Agent Difficulty Report.
+   - Per region or component: reuse an existing component, adapt a near match, compose from existing primitives, create a new component, or ask for an asset/decision. Collapse repeated visual structures into a single component candidate — repetition is itself the signal it should be one reusable component, not N ad-hoc elements.
+   - Decide a new component's home before its code (NN-16): repeatable structure or a design-system-grade value (e.g. a measurement on the project grid) → gate it, then centralize under an agreed name; screen-local only for a genuinely single-use, non-tokenized shape that will never repeat.
+   - Justify every new component, record confidence per area (high/medium/low), and connect each low-confidence or high-impact choice to the Agent Difficulty Report.
 
 6. **Run the decision gate**
-   - Stop before implementation when assets, fonts, copy, component choices, token additions, creating a new shared/design-system component, an asset whose target filename already exists and is referenced beyond this screen, a behavior-changing edit to a shared component/token/theme value whose call sites reach beyond this screen, or visual interpretations require user judgment.
-   - Mismatches the source already decides — wrong copy, color, size, radius, weight, an element the source shows but the build lacks (add it), an element the build shows but the source dropped (remove it) — are fix-list items, not gate questions; just fix them. Run the gate once, before implementation, never mid-pass. A late "should I fix the rest?" means you parked mismatches you should have audited up front.
-   - Group related questions. Each question must include the affected screen area, recommended option, alternatives, and impact.
-   - Include unresolved invisible aspects from the analysis: interaction states, off-screen behavior, motion, copy reality, asset-vs-drawable calls, unknown fonts, and unknown scale/density.
+   - Stop before implementation when assets, fonts, copy, component choices, token additions, a new shared/design-system component, an asset-name collision referenced beyond this screen, a behavior-changing shared edit, or visual interpretations require user judgment (NN-25).
+   - Mismatches the source already decides — wrong copy, color, size, radius, weight, a missing element (add it), a leftover element (remove it) — are fix-list items, not gate questions: just fix them. Run the gate once, before implementation, never mid-pass; a late "should I fix the rest?" means you parked mismatches you should have audited up front.
+   - Group related questions; each carries the affected screen area, recommended option, alternatives, and impact — including the unresolved invisible aspects from the analysis (interaction states, off-screen behavior, motion, copy reality, asset-vs-drawable calls, unknown fonts, unknown scale/density).
    - Route every user-owned or high-severity risk from the Agent Difficulty Report into this gate. Nothing material may remain hidden in the brief.
-   - Handle shared-symbol edits by class (NN-17). A **behavior-changing** shared edit is a full stop: present its blast radius (every other consumer affected) and proceed only on explicit approval. An **additive** default-no-op extension is lighter but never silent: announce the new trailing optional param/slot, name the callers you will re-verify, and commit to confirming the default leaves them unchanged. An unannounced additive edit is treated as behavioral.
+   - Handle shared-symbol edits by class (NN-17): a behavior-changing edit is a full stop — present its blast radius, proceed only on explicit approval; an additive edit is lighter but never silent — announce the param/slot and the callers you will re-verify. An unannounced additive edit is treated as behavioral.
    - Continue only after the user decides, unless the user explicitly allows placeholders.
 
 7. **Run the implementation readiness check**
-   - Before writing the brief, classify the work as `Ready`, `Ready with accepted assumptions`, or `Blocked`.
-   - `Ready` means no material risk requires user input and every agent-owned risk has a mitigation and verification check.
-   - `Ready with accepted assumptions` means the user explicitly delegated or accepted placeholders / approximations; list them in the brief and final report.
-   - `Blocked` means implementation would require inventing assets, brand choices, copy, behavior, or token changes without permission. Stop and ask.
+   - Classify the work before writing the brief: `Ready` — no material risk requires user input and every agent-owned risk has a mitigation and verification check; `Ready with accepted assumptions` — the user explicitly delegated or accepted placeholders/approximations, listed in the brief and final report; `Blocked` — implementation would require inventing assets, brand choices, copy, behavior, or token changes without permission: stop and ask.
 
 8. **Produce the implementation brief**
-   - Use `references/output-schemas.md`.
-   - Include files likely to change, components/tokens to reuse, new components if justified, asset requirements, adaptive behavior, accessibility requirements, and visual verification criteria.
-   - Include the resolved Agent Difficulty Report: what was decided, what assumptions were accepted, and which risks remain verification focus areas.
-   - Include platform-specific notes from `references/platform-notes.md` after detecting the stack.
-   - When a region's padding or overflow model is subtle — full-bleed scroller vs page-padded row, a scroll *peek* vs a *padding clip*, overlapping layers, peeking cards — restate the spatial model in plain words plus a one-line ASCII sketch of the edges, page gutters, and what crosses them, and confirm it before writing code. This is a targeted per-layout check for spatial ambiguity, not the decision gate and not ceremony for every screen; skip it where the frame is unambiguous.
+   - Use `references/output-schemas.md`: files likely to change, components/tokens to reuse, justified new components, asset requirements, adaptive behavior, accessibility requirements, and visual verification criteria — plus the resolved Agent Difficulty Report (decisions, accepted assumptions, remaining verification focus).
+   - Include platform-specific notes from `references/platform-notes.md` for the detected stack.
+   - When a region's padding or overflow model is subtle — full-bleed scroller vs page-padded row, a scroll *peek* vs a *padding clip*, overlapping or peeking layers — restate the spatial model in plain words plus a one-line ASCII sketch of the edges, page gutters, and what crosses them, and confirm it before writing code. A targeted check for spatial ambiguity, not ceremony for every screen; skip it where the frame is unambiguous. (`references/visual-analysis.md` §8; the deterministic fix: `references/platform-notes.md`, "Full-bleed scroller within a padded screen")
 
 9. **Implement only from the brief**
    - Edit the smallest relevant files.
@@ -132,10 +121,9 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
    - Keep temporary approximations visibly marked in the final report when the user allowed them.
 
 10. **Verify against the source (gate)**
-   - Follow `references/verification.md`: render YOUR built screen (not the source export), capture at the same logical dimensions and theme, and complete the element × property delta table for every element from the screen analysis — including regions you did not edit this pass. The table gates the "match" claim.
-   - Re-read your captured screenshot as an image; do not infer fidelity from the code alone.
-   - Reconcile the verification result against the Agent Difficulty Report: every listed risk must be mitigated, accepted by the user, or reported as a remaining gap.
-   - Fix major mismatches and re-compare. If rendering is impossible, surface that to the user as an explicit decision instead of silently claiming a match.
+   - Follow `references/verification.md`: render YOUR built screen (not the source export), capture at the same logical dimensions and theme, and complete the element × property delta table for every element from the screen analysis — including regions you did not edit this pass. The table gates the "match" claim (NN-28, NN-29).
+   - Re-read your captured screenshot as an image; never infer fidelity from the code alone.
+   - Reconcile every Agent Difficulty Report risk: mitigated, accepted by the user, or reported as a remaining gap. Fix major mismatches and re-compare; if rendering is impossible, surface it to the user as an explicit decision instead of silently claiming a match.
    - Run the relevant formatter, analyzer, tests, and build when available. Report unresolved gaps honestly.
 
 ## Reference Loading
