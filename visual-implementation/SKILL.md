@@ -92,6 +92,7 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
    - List where you are likely to struggle, not only where the user must act: source uncertainty, project mismatch, missing assets, unknown behavior, token gaps, accessibility/data variability, verification risk.
    - Per difficulty: likely failure mode if unchecked, confidence, severity, owner (`agent`/`user`/`project`), mitigation, destination (decision gate / implementation brief / verification focus), and the NN-x at stake where one applies.
    - "I can approximate this" is a risk, not a resolution, when it affects fidelity, reuse, accessibility, localization, brand correctness, or maintainability (NN-24).
+   - Two risks are routinely under-reported — include them as ledger items whenever applicable, with owner and destination: a font family the source names but the project may not bundle (verify, never assume), and the data states of the screen's key value that a static frame hides (loading, empty, masked/privacy). A mention under "invisible aspects" in the analysis does not count as routing them.
 
 5. **Map visual elements to project primitives**
    - Per region or component: reuse an existing component, adapt a near match, compose from existing primitives, create a new component, or ask for an asset/decision. Collapse repeated visual structures into a single component candidate — repetition is itself the signal it should be one reusable component, not N ad-hoc elements.
