@@ -108,6 +108,7 @@ visual-implementation/
     ├── failure-cases.md          # costliest real-session failures, case by case
     └── worked-example.md         # an end-to-end pass
 docs/                             # the wiki (start at docs/Home.md)
+tests/                            # scenario harness (see tests/README.md)
 ```
 
 ---
@@ -130,3 +131,5 @@ A deeper guide lives in **[`docs/`](docs/Home.md)**:
 ## Contributing
 
 Issues and pull requests are welcome. Keep the skill **lean**: prefer tightening an existing rule to adding a new one, and ground every change in a concrete failure it prevents.
+
+Changes to `SKILL.md` or `references/` should come with evidence from the [test harness](tests/README.md): a new rule needs a scenario that fails without it, and edits should re-run the affected scenarios (at minimum the retrieval canary, `tests/scenarios/04-pointer-chains.md`). Say what you ran in the PR.
