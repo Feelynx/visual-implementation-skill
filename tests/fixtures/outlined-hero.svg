@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 180">
+  <defs>
+    <linearGradient id="titleGrad" gradientUnits="userSpaceOnUse" x1="24" y1="48" x2="240" y2="48">
+      <stop offset="0" stop-color="#5629F5"/>
+      <stop offset="1" stop-color="#7E81F7"/>
+    </linearGradient>
+  </defs>
+
+  <g id="line1">
+    <path d="M24 60 L24 44 L29 44 L29 60 Z" fill="url(#titleGrad)"/>
+    <path d="M36 60 L36 44 L41 44 L41 51 L55 51 L55 44 L60 44 L60 60 L55 60 L55 55 L41 55 L41 60 Z" fill="url(#titleGrad)"/>
+    <path d="M67 60 L67 44 L84 44 L84 48 L72 48 L72 60 Z" fill="url(#titleGrad)"/>
+    <path d="M90 60 L90 44 L95 44 L95 60 Z" fill="url(#titleGrad)"/>
+    <path d="M102 60 L102 44 L119 44 L119 60 L114 60 L114 48 L107 48 L107 60 Z" fill="url(#titleGrad)"/>
+  </g>
+
+  <g id="line2">
+    <path d="M24 100 L24 82 L32 82 L32 100 Z" fill="#0F1728"/>
+    <path d="M40 100 L40 82 L48 82 L48 100 Z" fill="#0F1728"/>
+    <path d="M56 100 L56 82 L64 82 L64 100 Z" fill="#0F1728"/>
+    <path d="M72 100 L72 82 L80 82 L80 100 Z" fill="#0F1728"/>
+    <path d="M88 100 L88 82 L96 82 L96 90 L104 90 L104 82 L112 82 L112 100 L104 100 L104 94 L96 94 L96 100 Z" fill="#0F1728"/>
+  </g>
+
+  <g id="caption">
+    <path d="M24 140 L24 128 L26.5 128 L26.5 140 Z" fill="#757584"/>
+    <path d="M30 140 L30 128 L32.5 128 L32.5 140 Z" fill="#757584"/>
+    <path d="M36 140 L36 128 L38.5 128 L38.5 140 Z" fill="#757584"/>
+    <path d="M42 140 L42 128 L44.5 128 L44.5 140 Z" fill="#757584"/>
+    <path d="M48 140 L48 128 L50.5 128 L50.5 140 Z" fill="#757584"/>
+  </g>
+
+  <path d="M330 92 C 300 60 300 50 330 50 C 360 50 360 60 330 92 Z"
+        fill="#0D46B4" transform="rotate(15 330 60)"/>
+</svg>
