@@ -105,6 +105,7 @@ visual-implementation/
     ├── output-schemas.md         # the structured artifacts each phase emits
     ├── platform-notes.md         # per-stack idioms and mappings
     ├── verification.md           # the render-and-compare gate
+    ├── failure-cases.md          # costliest real-session failures, case by case
     └── worked-example.md         # an end-to-end pass
 docs/                             # the wiki (start at docs/Home.md)
 ```

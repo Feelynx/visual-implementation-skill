@@ -1,40 +1,56 @@
 # Non-Negotiables
 
-The hard rules, grouped by the failure each one prevents. The authoritative list lives in [`SKILL.md`](../visual-implementation/SKILL.md); this page explains the *why*.
+The hard rules, grouped by the failure each one prevents. The authoritative, numbered list (NN-1 … NN-30) lives in [`SKILL.md`](../visual-implementation/SKILL.md); this page explains the *why*. The recurring failures behind NN-8, NN-9 and NN-19 … NN-23 are kept, with their full reasoning, in [`references/failure-cases.md`](../visual-implementation/references/failure-cases.md).
 
-## Extraction fidelity
+## Sources of truth (NN-1 … NN-4)
+
+- **The user's language leads.** The whole interaction happens in the language of the user's request; only project-owned text (identifiers, tokens, paths, in-product string values) follows the project.
+- **Frames lead; code is an unverified draft.** Reading design intent off the implementation makes you narrate what the code does and call that the design. Analyze the frames first, then diff the code against them.
+- **No prior fidelity claim is evidence.** A commit message or a "1:1" note proves nothing; the rendered comparison does.
+- **Tokens outrank pixels.** When the source names a type/spacing/radius/colour token, map it to the project scale. Pixel estimation is a declared-uncertainty fallback — and it is biased *low* for type, because font advance width is narrower than generic estimates assume. A token-mapped value is corrected only by a different stated token, never by a ruler or a sampled hue.
+
+## Extraction fidelity (NN-5 … NN-9)
 
 - **Don't eyeball a vector.** Parse the SVG for exact colors, gradients, geometry, and `viewBox`.
-- **Tokens outrank pixels.** When the source names a type/spacing/radius token, map it to the project scale. Pixel estimation is a declared-uncertainty fallback — and it is biased *low* for type, because font advance width is narrower than generic estimates assume. A token-mapped value is corrected only by a different stated token, never by a ruler.
+- **Calibrate scale before measuring.** Without a reference frame, image pixels cannot become real `dp`/`pt`; cluster observed values and snap them to the project scale.
+- **Rhythm-correct beats pixel-perfect.** Tokens, roles, constraints, and proportional relationships — not fixed literals.
+- **Never default prominent text to Bold.** Medium 500 and Bold 700 read almost identically in a raster; the exact weight token decides, and genuine ambiguity is asked, not assumed.
+- **The exact token, never a plausible neighbour.** A near-token is a defect; grep the theme for the exact value and use the token that carries it.
 
-## Don't invent
+## Don't invent (NN-10 … NN-13)
 
 - **No invented assets, logos, icons, fonts, or unreadable copy** — ask the user.
+- **A dense illustration or map is an exported asset.** Redrawing it as a vector drawable balloons to megabytes; rasterizing it yourself distorts it. Ask for the PNG and compose only the overlay effects in code.
 - **Don't trust an asset by filename.** A name match is a candidate, not a confirmation: open it and compare orientation, rotation, mirror, color, fill style, and `viewBox`.
 - **Don't reconstruct content hidden by a crop, sheet, modal, or keyboard.** Transcribe only what is fully visible; flag the rest to the gate. Unreadable means "ask for a clearer source"; cut-off means "ask for the rest of the frame".
 
-## Reuse and placement
+## Reuse and scope (NN-14 … NN-18)
 
 - **Search before building** — across every component kind, including sheets and scaffolds.
+- **Siblings share one chrome.** A card among cards inherits the established background, border, elevation, radius, and typography — a differing instance is a consistency break to reconcile, not a styling choice.
 - **A reusable component is centralized** in the design system under an agreed name, never shipped as a screen-private helper. A repeatable structure or a design-system-grade value is the signal.
+- **Fix a screen at the narrowest scope that owns it.** Classify every edit to a shared symbol: a **behavior-changing** edit is gated and confirmed; an **additive** trailing-optional default-no-op extension is allowed once you prove the default leaves existing callers unchanged (compile *and* render one untouched caller).
 - **Trace existing wiring before adding plumbing.** Several triggers may already dispatch one shared event; a redundant event is the twin of a duplicated component.
 
-## Scope discipline
+## Behavior & states (NN-19 … NN-21)
 
-- **Fix a screen at the narrowest scope that owns it.** Classify every edit to a shared symbol: a **behavior-changing** edit is gated and confirmed; an **additive** trailing-optional default-no-op extension is allowed once you prove the default leaves existing callers unchanged (compile *and* render one untouched caller).
-- **Asset-name collisions are gated.** If a provided asset's name already exists and other screens reference it, ask: overwrite globally or install under a new agreed name. If the existing file is identical, reuse it and write nothing.
+- **Placement is measured, never defaulted.** An empty state goes where the frame puts it, not auto-centred — and content inside a draggable sheet or expandable panel must be placed and sized for *each* container state, or it disappears at the collapsed peek.
+- **Every layout mode renders every data state.** A map view and a list view over the same data each need loading, empty, no-results, and error: enumerate state × mode as a grid.
+- **Every implied branch is reasoned through.** A permission result is a tri-state — granted, denied, permanently-denied — and permanently-denied needs an open-app-settings recovery, not a silent "proceed without". Back, cancel, offline, and error are implied even when no frame draws them.
 
-## Completion
+## Serve the user, not the container (NN-22 … NN-23)
+
+- **Overflow is a communication problem, not a layout one.** Don't resolve it by truncating — reflow (stack, wrap, own line) so the full string stays readable; truncation is a gated last resort, never applied to the one datum the screen exists to show.
+- **Question redundant chrome.** An element restating what the same screen already shows may be dropped — but only after confirming the duplication in code and routing the removal through the gate.
+
+## Gates and honesty (NN-24 … NN-27)
+
+- **Surface difficulties as a user-facing risk ledger** before asking decisions or writing code; "I can approximate this" is a risk, not a resolution.
+- **Never bypass the decision gate** on anything that could materially change fidelity, reuse, accessibility, or maintainability — and never continue past a material risk with a silent placeholder, nearest asset, or lookalike font.
+- **The brief is screen-specific**, executable by another agent — not a generic plan.
+
+## Completion (NN-28 … NN-30)
 
 - **A compile or build success is not visual completion**, and neither is rendering the *source* export. Completion requires rendering **your built screen** and comparing it to the source property by property — or telling the user rendering was impossible.
-- **Don't trust prior fidelity claims** — a commit message, a comment, or a "1:1" note. Re-derive every visible property from the source.
-- **An element is correct only after every property is checked** against the token-mapped source value: copy (per locale), type size/weight/line-height and per-run color/fill, gaps and insets, radius, border, shadow, icon identity/orientation, container chrome, presence, and state.
-
-## Serve the user, not the container
-
-- **Overflow is a communication problem, not a layout one.** Don't resolve it by truncating — ellipsis, fade, `maxLines` clipping, or shrinking copy hides information from the user. Ask what the label must convey, then reflow so the full string stays readable: stack the label above its trailing controls (a two-line row), wrap, or give it its own line, before you ever clip it. Truncation is a last resort named at the gate, never applied to the one datum the screen exists to show. Reaching for ellipsis is the tell that you're solving the constraint instead of the user's need.
-- **Question redundant chrome.** A label, tag, or chip that restates what another element on the same screen already says — a "focus" pill naming the same item an on-top "next step" summary names, both from the same computed value — is redundant, and dropping it can dissolve a layout constraint instead of fighting it. Confirm the duplication in code, route the removal through the gate as a two-direction diff item, and never infer redundancy from the visual alone.
-
-## Communication
-
-- **Conduct the interaction in the user's language**, and surface difficulties as a user-facing risk ledger before asking decisions or writing code.
+- **An element is correct only after every property is checked** against the token-mapped source value; fixing only the deltas you happened to notice is not an audit.
+- **Never drive the user's device or emulator without permission** — it is often shared and mid-review. Read-only screenshots are fine; and confirm the build actually succeeded *before* committing.
