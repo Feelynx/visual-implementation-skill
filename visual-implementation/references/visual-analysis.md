@@ -5,9 +5,10 @@ Protocols for extracting reliable design intent from a visual source. The source
 ## 0. Classify the source first
 
 - **Vector:** `.svg`, or any export whose text is selectable and whose coordinates are present. Parse the source.
-- **Raster:** `.png`, `.jpg`, `.webp`, screenshots, photos of a screen. Estimate perceptually.
+- **Raster:** `.png`, `.jpg`, `.webp`, screenshots, photos of a screen. Measure with the instrument, estimate perceptually as the fallback (§2).
 - **Mixed:** SVG with an embedded `<image>` base64 = vector chrome plus a raster asset. A PDF or Figma link is neither — ask for an exported SVG or PNG (a Figma link is resolvable without asking when a programmatic connection exists; see the named-token spec entry).
 - **Named-token spec (outranks vector and raster):** a Figma styles/variables panel, an inspect/redline export, or a values table that *names* design values (type style, spacing variable, radius token). When present it is the highest-priority source: map source token → project token directly and do not re-derive that value from pixels or path coordinates; parse the SVG / estimate the raster only for geometry the tokens do not cover. **Fetch it yourself when you can:** if the session has a programmatic Figma connection (a Figma MCP server or API access — check the available tools before asking the user), pull the styles, variables, and node values for the linked frame directly; what you fetch IS this spec, with the same priority. A bare Figma link with no exported spec and no such connection is not this — ask for the token names or the inspect panel before falling back to measurement.
+- **Target class & design width (record at intake):** detect the target class from the frame chrome — browser chrome / scrollbars / cursor = web; traffic-light buttons / window title bar = desktop; otherwise mobile. Record the design width and the device-pixel-ratio (DPR) as intake facts; they scope every later scale conversion (§3), and a wide/desktop/web target pulls in the §8 behaviors a mobile frame never raises.
 
 ## 0.5 Reconcile a frame set into screens × states (before analyzing any single frame)
 
@@ -31,14 +32,17 @@ Read the raw SVG as text and extract exact values, not impressions:
 
 Map each exact value to the nearest project token. When an exact value has no matching token → decision gate (add a token vs snap to nearest).
 
-## 2. Raster branch — estimate with declared uncertainty
+## 2. Raster branch — instrument when you can, estimate with declared uncertainty otherwise
 
-You cannot sample a pixel or measure precisely from a raster. Every value is an estimate carrying a confidence.
+With ImageMagick, a raster is *measured* (`scripts/measure.sh`); without it, every value is an *estimate* carrying a confidence — the declared-uncertainty fallback. Either path runs under a fixation protocol: models lose fine detail on a full-frame read, so a conclusion formed only at whole-frame scale is provisional by definition.
 
-- Read the image region by region (crop-and-zoom): inspect one area at a time rather than the whole frame at once.
-- Sample color at multiple points within a fill; report a representative value and note when it varies (gradient, noise, compression).
-- Express sizes and gaps as *relationships and ranges*, then snap to the project scale (§3). Never emit a precise literal you did not measure.
-- Compression artifacts, anti-aliasing, and `@2x` / `@3x` downscaling shift colors and soften edges — lower confidence near thin strokes, small text, and shadows.
+1. **Gestalt pass.** One read of the whole frame for layout regions, hierarchy, and reading order — orientation only, no values.
+2. **Fixate every tile.** Tile the frame (`measure.sh <img> tiles <COLSxROWS> <outdir>`, or manual crops via `measure.sh <img> crop <x> <y> <w> <h> <out.png>`) and read EVERY tile at native resolution or integer zoom. A value formed only at whole-frame scale stays provisional until confirmed at native res.
+3. **Instrument, don't eyeball (ImageMagick present).** Within each region: `measure.sh <img> color <x> <y> [radius]` / `palette` for fills; `measure.sh <img> edges <x> <y> <w> <h> <row|col>` for every gap and inset in the spacing inventory (§3); `measure.sh <img> capheight <x> <y> <w> <h>` for text-size bands (§5); `measure.sh <img> contrast <x1> <y1> <x2> <y2>` for text-on-fill pairs (§4). A regional read that samples only colors is not the protocol — the minimum instrumented set per screen is fills, every named gap/inset, one cap-height per distinct text size, and contrast for the key text-on-fill pairs. No ImageMagick → perceptual estimation, still tiled, at declared uncertainty.
+4. **Tag provenance per value — in your notes AND in every report you emit.** Mark each *measured (instrument)* or *estimated (perceptual)*; a numeric claim presented without its provenance tag and the command that produced it reads as an estimate, whatever precision it displays. An eyeballed value where the instrument was available is low-confidence by definition.
+5. **Carry the caveats on both paths.** Compression artifacts, anti-aliasing, and `@2x` / `@3x` downscaling shift colors and soften edges — lower confidence near thin strokes, small text, and shadows.
+
+Never emit a precise literal you did not measure — measured literals now exist, and they still snap to tokens per §3.
 
 ## 3. Scale & density calibration (run before deriving any spacing)
 
@@ -47,6 +51,7 @@ Without a reference frame, image pixels cannot become real `dp` / `pt`.
 1. **Establish the reference frame.**
    - SVG: the `viewBox` gives logical units directly.
    - Raster: you need the **device width** (e.g. 390pt iPhone, 360dp Android) and the **scale factor** (`@1x` / `@2x` / `@3x`). If either is unknown → decision gate; do not assume.
+   - **Calibrate scale per target.** Desktop/web frames are commonly `@1x`/`@2x` while mobile frames are `@2x`/`@3x` — never reuse a mobile scale factor for a desktop/web frame of the same product. A browser screenshot's device-pixel-ratio (DPR) is part of this reference-frame question, not a detail to skip.
 2. **Convert.** For a device screenshot, `logical = imagePx / scaleFactor`. Otherwise work proportionally: `element / screenWidth`.
 3. **Derive scales by clustering, then snap.** Collect observed gaps / sizes / radii, cluster nearby values, and map each cluster to the project's existing spacing / type / radius scale. Prefer the project token over the raw number. This replaces "pixel-perfect" with "rhythm-correct" without inventing literals.
 4. **Measure geometry from rendered pixels, not raw path numbers.** Outlined text and icon glyphs arrive as `<path d="…">`; never `min`/`max` over the numbers in `d` — Bezier control points (`C`/`S`/`Q`/`T`) sit outside the visual ink and inflate the bounding box (this is exactly what makes a measured gap or glyph read too large). Isolate the node/group, render only it, and measure at `viewBox` scale. Align related elements (icon-row → title, glyph inside its tile) from the **same** rendered frame, not two separate raw `d` reads.
@@ -55,8 +60,9 @@ Without a reference frame, image pixels cannot become real `dp` / `pt`.
 
 ## 4. Color
 
-- SVG: take exact values (§1). Raster: estimate per §2 and express as the nearest semantic color role / token.
+- SVG: take exact values (§1). Raster: with ImageMagick, *sample* the value (`measure.sh <img> color <x> <y> [radius]`, multi-point across the fill) rather than estimate it; without it, estimate per §2. Either way the decision is token mapping: a small distance from a project token → snap to the token; a genuinely token-less sampled value → decision gate (add a token vs snap to nearest), exactly as before.
 - Decompose visible color: base fill vs overlay opacity vs shadow. A "grey" is often black at low opacity over the background — map to the role, not a one-off hex.
+- **Contrast is an analysis output, not an afterthought.** Compute WCAG contrast for the key text-on-fill pairs (`measure.sh <img> contrast <x1> <y1> <x2> <y2>`) and route AA failures to the risk ledger as accessibility risk. A design can ship an AA failure — flag it, never silently "fix" it.
 - Flag low confidence on gradients, translucency, and shadowed regions.
 
 ## 5. Typography
@@ -64,6 +70,8 @@ Without a reference frame, image pixels cannot become real `dp` / `pt`.
 - Determinable: role (display / title / headline / body / label / caption), relative size, relative weight, alignment, approximate line length.
 - **Per-run color and weight:** one text block can carry multiple colors or weights — a two-tone title (line 1 vs line 2) or a bold word/label inside regular copy. Inspect each line / run separately; never collapse a block to one color + one weight. Encode as `AnnotatedString`, multiple `Text` composables, or split string keys. **A run's fill can also be a paint, not a solid:** colour shifting *continuously along the run* (a lead word fading toward one end) is **one brush spanning the run** — record direction, stops+offsets, and the terminal stop's colour *and* opacity, and reproduce it with a text brush (platform-notes), never an averaged solid token; colour changing at a glyph/word boundary is a two-tone run (separate solids). In a raster a fill fading toward the background reads like the text getting lighter, trailing off, or cut at the edge — flag a possible text brush at low confidence and confirm at the gate; do not transcribe the faded end as a lighter solid or drop the faint glyphs.
 - **A stated token outranks any pixel measurement, and every run is sized from its own evidence.** When the source exposes a type token or named value (Figma `Typography/md`, a documented sp/pt), look it up or ask for it and map it to the project type scale — the token is ground truth for size, weight, AND line-height (e.g. `Typography/md` = 16sp/400/150% → `TextRegularM`); do not flatten the token's line-height to a default. Absent a token, exact family, fine weight (500 vs 600), and precise letter-spacing/line-height are not reliably determinable; coarse weight class (regular/medium/bold) IS determinable from stem thickness even in raster or outlined sources. **Never back-calculate font size from glyph or character width:** advance width is font-specific (Roboto ≈ 0.43em/char vs the ≈0.5em a generic estimate assumes), so a real 16sp run measures like 14sp and you will wrongly downsize it — pixel font-size estimation is a tagged-low-confidence fallback, biased low. Derive a size for *every* run — title, body, and each subtitle/caption/label — from its own evidence rather than sizing the prominent run and defaulting the rest to the standard body token; tag each `token (stated)` or `estimate (pixel, font-metric uncertainty)`.
+- **Cap-height sizing (upgrades the pixel fallback).** Measure the cap height of a clean line (`measure.sh <img> capheight <x> <y> <w> <h>`): the estimate BAND `px/0.75 … px/0.66` is advance-width-independent, so it dodges the back-calc trap above. Report the band and snap to the type-scale token inside it — still a tagged estimate, still outranked by any stated token (NN-4). **Letter-spacing** is measurable at zoom from the inter-glyph gaps of a straight-sided pair (`HH`, `ll`) as a px value; report it only when clearly non-default.
+- **Font candidate check (families).** When the family is unknown, before asking, render the project's BUNDLED candidate fonts on the same string at the same size and compare glyph anatomy — single/double-story `a` and `g`, `R` leg, `t`/`f` terminals, digit shapes — against a foveal crop (`measure.sh <img> crop`). A match is a *candidate claim* for the gate, never a silent substitution (NN-10 still governs).
 - Map to the project's type roles. A family the source *names* (`font-family="Inter"`) is a claim to verify, not a given: extract it, check the project actually bundles it, and when it is absent raise availability as a risk-ledger item and gate the substitution. If the family is unknown and not inferable from the project → decision gate (ask; do not silently pick a lookalike).
 
 ## 6. Asset vs drawable
@@ -113,6 +121,7 @@ A single frame hides most of the screen's behavior. For each item, either infer 
   3. Diagnose the cut before reacting: a **capture artifact** (the full element exists off-frame — request an un-cropped/scrollable export) versus an **intentional peek** signalling scroll (the cut *is* the spec — reproduce the partial reveal, do not pad it into a full item).
   4. Route every partial or hidden element to the decision gate flagged provisional: request the rest of the frame, ship explicitly-flagged provisional content the user confirms, or omit it this pass — never invent hidden copy or structure and present it as observed.
 - **Data variability & width-constrained overflow:** long names, large numbers, empty / loading / error states — and, for text inside a fixed-width or space-shared container (carousel card, fixed tile, a label sharing its row with a trailing control), the overflow policy the single sampled string hides. The frame shows one length that happens to fit; decide single-line + ellipsis, a stated max-line cap, or intentional wrap, and verify with a deliberately long value. Width-constrained text with no `maxLines` + overflow set is the default failure — an address wrapping to a second line inside a fixed card is a defect, not the layout.
+- **Wide / desktop / web affordances (desktop & web targets):** hover, focus-visible, and cursor affordances; scrollbar policy (overlay vs layout-affecting); window-resize behavior between the shown width and the target's real min/max. A single-width frame decides none of these — route them to the gate for desktop/web targets.
 - **Variants:** light / dark theme, RTL, dynamic type / font scaling.
 
 ## 9. Confidence calibration

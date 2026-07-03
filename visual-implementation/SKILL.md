@@ -1,11 +1,11 @@
 ---
 name: visual-implementation
-description: Use when implementing or reviewing a mobile UI from an external visual source such as a PNG, SVG, Figma export, screenshot, mockup, or design reference, especially for Flutter, Android Kotlin/Jetpack Compose, iOS SwiftUI/UIKit, or Kotlin Multiplatform/Compose Multiplatform projects; also use when visual fidelity depends on missing assets, unknown fonts, ambiguous scale, design-system mapping, or screenshot verification.
+description: Use when implementing or reviewing a mobile, desktop, or web UI from an external visual source such as a PNG, SVG, Figma export, screenshot, mockup, or design reference, especially for Flutter (including desktop/web), Android Kotlin/Jetpack Compose, iOS/macOS SwiftUI/UIKit, or Kotlin Multiplatform/Compose Multiplatform (including Desktop and web/wasm targets); also use for a "desktop app UI", "web app screen", "wide viewport", or "responsive/adaptive layout", and when visual fidelity depends on missing assets, unknown fonts, ambiguous scale, "hover states", design-system mapping, or screenshot verification.
 ---
 
 # Visual Implementation
 
-Use this skill to turn a visual source into design-system-grounded mobile UI work. Treat the visual source as the source of truth for intent, the existing project as the source of truth for implementation language, and the user as the source of truth for missing assets and ambiguous decisions.
+Use this skill to turn a visual source into design-system-grounded mobile, desktop, and web UI work. Treat the visual source as the source of truth for intent, the existing project as the source of truth for implementation language, and the user as the source of truth for missing assets and ambiguous decisions.
 
 ## Non-Negotiables
 
@@ -20,11 +20,12 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
 
 ### Extraction
 
-- **NN-5 — Parse an SVG, never eyeball it** — exact colors, gradients, typography, geometry, `viewBox`. Estimate perceptually only for raster sources, and declare the uncertainty. (`references/visual-analysis.md` §1–2)
+- **NN-5 — Parse an SVG, never eyeball it** — exact colors, gradients, typography, geometry, `viewBox`; instrument a raster when the tooling allows (`scripts/measure.sh`: sampled color, measured gaps/insets, cap-height bands) and tag every value's provenance measured vs estimated. Perceptual estimation with declared uncertainty is the fallback, not the default. (`references/visual-analysis.md` §1–2)
 - **NN-6 — Calibrate scale and density before deriving any spacing, size, or radius.** Cluster observed values and snap them to the project scale instead of inventing literals. (`references/visual-analysis.md` §3)
 - **NN-7 — Tokens over pixel-perfect literals.** Prefer tokens, theme values, existing spacing scales, typography roles, constraints, safe-area behavior, adaptive layout, and proportional relationships to fixed measurements.
 - **NN-8 — Never default prominent text to Bold.** Medium 500 read as Bold 700 is the recurring raster miss; read the exact weight token, and when the source leaves it ambiguous, ask or flag — never assume Bold. (`references/failure-cases.md` #1)
 - **NN-9 — The exact token, never a plausible neighbour.** An exact stated value maps to the exact project token that carries it; a near-token is a defect, and later user-fed specs override your earlier approximations. (`references/failure-cases.md` #2)
+- **NN-31 — No property verdict from a whole-frame read alone.** A raster is read region by region at native resolution (tiles / crops); a conclusion formed only at whole-frame scale is provisional until confirmed at native resolution. (`references/visual-analysis.md` §2)
 
 ### Don't invent
 
@@ -64,28 +65,29 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
 - **NN-28 — A build success is not visual completion** — and neither is rendering the source export. Completion requires rendering YOUR built screen, capturing it, and comparing it to the source property by property, or explicitly telling the user rendering was impossible. (`references/verification.md`)
 - **NN-29 — An element is correct only after EVERY property is compared** to the token-mapped source value; the element × property delta table gates the "match" claim, and fixing only the deltas you happened to notice is not an audit. (`references/verification.md`)
 - **NN-30 — Never operate the user's device or emulator without explicit permission.** Read-only screenshots are fine; tapping, typing, swiping, or navigating hijacks a session that is often shared and mid-review — use your own render harness or wait for a go-ahead. Confirm the build actually succeeded (grep the real output) *before* committing, not after. (`references/verification.md`, "Rendering etiquette & build truth")
+- **NN-32 — One frame is one width.** For desktop/web targets, hover/cursor/focus affordances, scrollbar policy, and resize/breakpoint behavior are gate items a static frame cannot decide, and verification captures more than one window width; a single-width match claim is not completion for a resizable target. (`references/platform-notes.md`, "Wide viewports"; `references/verification.md`)
 
 ## Required Workflow
 
 1. **Intake the visual source**
    - Identify file type, dimensions, apparent platform, density, orientation, theme mode, system UI visibility, and screen state.
-   - Classify the source kind — named-token spec / vector / raster / mixed — and calibrate scale before measuring anything; unknown density or scale goes to the decision gate. (`references/visual-analysis.md` §0–3)
+   - Classify the source kind — named-token spec / vector / raster / mixed — and the target class (mobile vs desktop vs web, from the frame chrome), and calibrate scale before measuring anything; record design width and DPR as intake facts, and send unknown density or scale to the decision gate. (`references/visual-analysis.md` §0–3)
    - Ask whether a named-token spec exists (Figma styles/variables, an inspect/redline export, a values table) and request token names rather than measuring them (NN-4) — fetching them yourself first when the session has a Figma MCP/API connection (`references/visual-analysis.md` §0). Record the spec's absence as a verification risk for the Agent Difficulty Report.
    - If the source is missing or unreadable, request a usable PNG/SVG/screenshot before proceeding.
    - Set your response language to the user's request language now (NN-1), before emitting any analysis.
 
 2. **Analyze the complete screen**
    - Describe layout regions, hierarchy, navigation structure, content groups, component candidates, typography roles, color roles, interaction states, imagery, iconography, and visible copy — as relationships and rhythm (emphasis, density, grouping, alignment), not hardcoded sizes.
-   - Apply the extraction protocols in `references/visual-analysis.md` (color, typography, asset-vs-drawable, system chrome) and record what a static image cannot show: states, off-screen content, motion, real vs placeholder copy, occlusion, data/theme variants (§8).
+   - Apply the extraction protocols in `references/visual-analysis.md` (color, typography, asset-vs-drawable, system chrome), reading each raster region under the fixation protocol (tile at native resolution, instrument with `scripts/measure.sh`) rather than a whole-frame-only read, and record what a static image cannot show: states, off-screen content, motion, real vs placeholder copy, occlusion, data/theme variants (§8).
    - Emit the screen analysis schema from `references/output-schemas.md`.
-   - **Existing-screen / redesign / "make it 1:1" branch:** the baseline is a *pixel capture* of the current build — rendered by you or supplied by the user — never a reading of the code. Run the delta table against the source, diffing in both directions; the mismatches are your task list. If you can neither render nor obtain screenshots, you can neither baseline nor verify — raise it at the gate now, not after implementing. (`references/verification.md`, "Baseline first")
+   - **Existing-screen / redesign / "make it 1:1" branch:** the baseline is a *pixel capture* of the current build — rendered by you or supplied by the user — never a reading of the code. Run the delta table against the source, diffing in both directions; the mismatches are your task list. If you can neither render nor obtain screenshots, you can neither baseline nor verify — raise it at the gate now, not after implementing. A review-only ask — "does the build match the design?", no code to write — is this same branch: the element × property delta table, fed by the region-ranked compare and provenance-tagged measured values, IS the answer, never a whole-frame impression (NN-29, NN-31). (`references/verification.md`, "Baseline first")
 
 3. **Scan the project before designing anything**
    - Detect stack and UI layer: Flutter, Android Compose, SwiftUI/UIKit, KMP/Compose Multiplatform, or mixed.
    - Search design tokens, themes, typography, color roles, and spacing scales — and, with equal weight, structural components (sheets, dialogs, scaffolds, list items, rows, cards, accordions, chips), plus screen examples, asset catalogs, icon sets, localization, and navigation patterns. Grep by structure, not only by name (e.g. `rg -l 'BottomSheet|Sheet|Scaffold|ListItem|Row|SectionCard|Accordion|Dialog'`), and read the hits; a create-new decision is valid only after reuse is ruled out across every component kind (NN-14).
    - Prefer `rg`/fast project search. Cite concrete files and symbols in the implementation brief.
    - Regulated copy (legal, consent, medical) is searched before it is drafted — a validated multi-locale translation almost always already exists in a mirror or sibling flow. (`references/failure-cases.md` #8)
-   - Locate the **render / capture path** now — preview, simulator/emulator, screenshot/golden test, or debug build. If none exists, raise it as a verification risk at intake instead of discovering it after implementing.
+   - Locate the **render / capture path** now — preview, simulator/emulator, screenshot/golden test, or debug build; for desktop/web targets, the capture plan covers multiple window widths. If none exists, raise it as a verification risk at intake instead of discovering it after implementing.
 
 4. **Surface the agent difficulty report**
    - Produce the Agent Difficulty Report schema from `references/output-schemas.md` after analysis and scan, before the decision gate and before implementation.
@@ -122,18 +124,18 @@ Hard rules, numbered for citation (NN-x) in the Agent Difficulty Report, decisio
    - Keep temporary approximations visibly marked in the final report when the user allowed them.
 
 10. **Verify against the source (gate)**
-   - Follow `references/verification.md`: render YOUR built screen (not the source export), capture at the same logical dimensions and theme, and complete the element × property delta table for every element from the screen analysis — including regions you did not edit this pass. The table gates the "match" claim (NN-28, NN-29).
+   - Follow `references/verification.md`: render YOUR built screen (not the source export), capture at the same logical dimensions and theme, run the region-ranked compare (`scripts/compare.sh` report + a foveal re-read of the worst tiles) and the numbers-to-numbers computed-layout check where the platform exposes one, and complete the element × property delta table for every element from the screen analysis — including regions you did not edit this pass. The table gates the "match" claim (NN-28, NN-29).
    - Re-read your captured screenshot as an image; never infer fidelity from the code alone.
    - Reconcile every Agent Difficulty Report risk: mitigated, accepted by the user, or reported as a remaining gap. Fix major mismatches and re-compare; if rendering is impossible, surface it to the user as an explicit decision instead of silently claiming a match.
    - Run the relevant formatter, analyzer, tests, and build when available. Report unresolved gaps honestly.
 
 ## Reference Loading
 
-- Read `references/visual-analysis.md` during intake and analysis, to apply the source-type branch, scale calibration, and extraction protocols.
+- Read `references/visual-analysis.md` during intake and analysis, to apply the source-type branch, scale calibration, the raster fixation protocol, and extraction protocols.
 - Read `references/failure-cases.md` when a non-negotiable cites it and its trigger appears in the task — assigning a weight token (NN-8), near-matching a stated value (NN-9), multi-mode or stateful-container layouts (NN-19, NN-20), permission or branch-heavy flows (NN-21), overflowing or duplicated content (NN-22, NN-23).
 - Read `references/output-schemas.md` whenever producing the screen analysis, Agent Difficulty Report, decision gate, implementation brief, or verification report.
-- Read `references/platform-notes.md` after detecting the target stack or when the user names Flutter, Android Compose, SwiftUI/UIKit, or KMP/Compose Multiplatform — and always before editing a shared component (NN-17, "Extending a shared component additively").
-- Read `references/verification.md` before claiming visual completion.
+- Read `references/platform-notes.md` after detecting the target stack or when the user names Flutter, Android Compose, SwiftUI/UIKit, or KMP/Compose Multiplatform (including their desktop and web targets) — and always before editing a shared component (NN-17, "Extending a shared component additively") or building a wide-viewport target ("Wide viewports").
+- Read `references/verification.md` before claiming visual completion — or any match/mismatch verdict between a frame and a build capture, including review-only asks.
 - Read `references/worked-example.md` for an end-to-end pass (SVG → analysis → Agent Difficulty Report → decision gate → brief → verification) when you want a concrete model to follow.
 
 ## Completion Criteria

@@ -1,6 +1,6 @@
 # Platform Notes
 
-Load the relevant section after detecting the target stack, **plus the cross-cutting sections after the per-stack ones** ("Full-bleed scroller…", "Extending a shared component additively…", and the Compose sheet patterns) — they apply on top of every stack and are the ones a stack-only read misses. Prefer local project conventions over these defaults.
+Load the relevant section after detecting the target stack, **plus the cross-cutting sections after the per-stack ones** ("Wide viewports…", "Computed-layout dump…", "Full-bleed scroller…", "Extending a shared component additively…", and the Compose sheet patterns) — they apply on top of every stack and are the ones a stack-only read misses. Prefer local project conventions over these defaults.
 
 ## Flutter
 
@@ -10,6 +10,11 @@ Load the relevant section after detecting the target stack, **plus the cross-cut
 - Check `pubspec.yaml`, `lib/theme`, `lib/core`, `lib/design_system`, `lib/shared`, generated localization, asset folders, and reusable screen examples.
 - Verify with `dart format`, `flutter analyze`, relevant widget tests, and screenshots/previews when available.
 - **Text fill gradient:** `ShaderMask` with `LinearGradient(...).createShader(bounds)`, or `TextStyle(foreground: Paint()..shader = …)`; transparent end stop for fades; do not approximate with one `color:`.
+- **Desktop target is a real target, not a resized phone.** Run `flutter run -d macos|windows|linux`; set deterministic verification size and min size from the app/window layer before comparing.
+- **Flutter web capture goes through the browser.** Run `flutter run -d chrome`; capture with headless Chrome `--screenshot --window-size=<w>,<h>` at the exact logical frame size, not a hand-resized browser.
+- **Hover and pointer states exist.** Inventory `MouseRegion`, `WidgetStateProperty` hover styles, `SystemMouseCursors`, and `FocusableActionDetector`; `PointerInterceptor` matters only when web platform views (`HtmlElementView`, maps) swallow overlay clicks.
+- **Desktop scrollbars can move layout.** `Scrollbar` / `ScrollbarTheme` may be visible by default on desktop; decide overlay vs layout-affecting before measuring full-bleed peeks.
+- **Capture path changes by target.** `flutter screenshot` is for attached devices and is not the web truth; desktop golden/widget tests can run headless and assert layout without a launched window.
 
 ## Android Kotlin / Jetpack Compose
 
@@ -21,6 +26,9 @@ Load the relevant section after detecting the target stack, **plus the cross-cut
 - **A box-shadow is not an elevation dp.** A designer `box-shadow` (offset, blur, spread, color%) does not map to one Material `elevation` / `Modifier.shadow(elevation)`: Material derives blur from a single dp with a fixed light direction and ignores explicit offset, spread, and color. Do not approximate `0 4 8 #000/5%` as "≈2dp." Reproduce the spec with `Modifier.shadow(elevation, shape, spotColor, ambientColor)` tuned to it, a `drawBehind` blur, or a project shadow helper — or flag it as an approximation, confirm at the decision gate, and verify visually.
 - **Text fill gradient → a `Brush`, not a colour token.** Apply `TextStyle(brush = …)` to a whole `Text`, or `SpanStyle(brush = …)` inside an `AnnotatedString` for one word; build the brush from the source's real direction and stops. Prefer a `Color.Transparent` terminal stop over a surface colour like `Color.White` — a transparent fade survives any surface and theme. Never flatten to one `color =`.
 - **A wrapper scaffold may already consume its own `paddingValues` — don't re-apply them.** A project `DefaultXScaffoldScreen` frequently wraps M3 `Scaffold`, applies `.padding(paddingValues)` to its inner content Box, AND passes the same `paddingValues` into the content lambda "for convenience." If your content then also applies `.padding(padding…)`, the top/bottom insets apply twice and the whole screen drops toward mid-screen — a mysterious ~2× top offset that reads like the content is centred. Before consuming a scaffold-provided `paddingValues`, READ the wrapper's source: if it already pads its content, ignore the passed value (`Modifier.fillMaxSize()`), and steer edge-to-edge bleed through the wrapper's `contentWindowInsets` (e.g. `WindowInsets.safeDrawing.only(Horizontal + Top)` so a map reaches the bottom) instead of re-padding. Symptom to recognise instantly: an empty/results/prompt state sitting at ~40–50% instead of just under the top bar.
+- **Wide Android is still Android, not CMP desktop.** Tablets, foldables, and Chrome OS use adaptive Android Compose: route width behavior through `WindowSizeClass` and the project's pane/list/detail primitives.
+- **Hover exists on Android surfaces with pointers.** Use `Modifier.hoverable`, `MutableInteractionSource`, and `PointerIcon` where the design has hover or cursor affordance; keep touch targets unless the target density says otherwise.
+- **Chrome OS verification needs its own width.** Capture a tablet/foldable/Chrome OS size when the source is wide; a phone emulator screenshot does not prove the expanded layout.
 
 ## iOS SwiftUI
 
@@ -31,6 +39,11 @@ Load the relevant section after detecting the target stack, **plus the cross-cut
 - Verify with SwiftFormat/SwiftLint if present, previews, unit/UI tests, simulator screenshots, or `xcodebuild` when available.
 - **Shadow mapping:** `.shadow(color:radius:x:y:)` honors color, offset, and blur (`radius ≈ blur / 2`) but has no spread — reproduce spread with an inset/background layer or flag it. Do not reduce a full box-shadow to a default `.shadow(radius:)`.
 - **Text fill gradient:** `Text(…).foregroundStyle(LinearGradient(…))`, or `.overlay(gradient).mask(Text(…))` for effects it cannot express. Use a `.clear` terminal stop, not a surface colour, so the fade survives any theme; do not reduce it to `.foregroundColor`.
+- **macOS native and Catalyst are different targets.** SwiftUI on macOS uses AppKit windowing; Catalyst keeps UIKit semantics inside a Mac shell — name which one the design targets.
+- **Hover and cursor are first-class.** Use `.onHover`, `.pointerStyle` where available, or `NSCursor` bridging for cursor changes; static frames hide these states.
+- **Window sizing is part of the spec.** Set `.frame(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:)` at the window/root level so verification opens at the design size and refuses impossible shrink states.
+- **Keyboard focus is visible chrome.** Focus rings, default buttons, tab order, and sidebar/list focus states are design surface on macOS, not accessibility extras.
+- **Verify as macOS when targeting macOS.** Use `xcodebuild -destination 'platform=macOS'`; capture windows with `screencapture -l <windowid>` after finding the real window id. Previews still work for isolated components.
 
 ## iOS UIKit
 
@@ -49,6 +62,30 @@ Load the relevant section after detecting the target stack, **plus the cross-cut
 - Verify common code plus at least the relevant platform target when commands are available.
 - A shared text brush lives in common Compose exactly as the Compose case above — keep it in the shared design-system text style, not per platform.
 - **Compile the actual platform target to validate bindings, even when the full app can't run on this host.** `./gradlew :<module>:compileKotlinIosSimulatorArm64` (or the XCFramework task) type-checks Kotlin/Native UIKit / Foundation / CoreLocation bindings without a Mac app build. They do NOT map 1:1 to the Obj-C headers — a property such as `popoverPresentationController` may be absent from the binding, and `keyWindow` is deprecated-but-present. Hold platform delegates/callbacks in a strong property (`CLLocationManagerDelegate`, the presenting VC for `UIActivityViewController`) or K/N collects them before the async callback fires. Compiling proves the bindings resolve; runtime behavior still needs a device/simulator, so flag it as such.
+- **Desktop JVM target owns its window.** Use `Window(state = rememberWindowState(size = DpSize(...)))` or the project wrapper; run with `./gradlew :composeApp:run` and capture at that exact size. The exact size is for *capture*, not a license for a fixed window — resizability, min-width, and breakpoints are gate items ("Wide viewports" below).
+- **Desktop hover and cursor are explicit Compose behavior.** Use `hoverable`, `MutableInteractionSource`, and `PointerIcon`; a clickable desktop control without a cursor affordance is incomplete.
+- **Desktop scrollbars are not automatic.** A design showing a scrollbar means adding `VerticalScrollbar` / `HorizontalScrollbar` with `rememberScrollbarAdapter`; do not expect `LazyColumn` to paint one.
+- **Offscreen capture can be deterministic.** `ImageComposeScene` can render a composable at a fixed size without a visible JVM window; use it for layout screenshots when the project has no harness.
+- **Web target is browser-verified.** wasm/js Compose targets exist; run the project target and capture with a headless browser at the exact viewport, then compare like Flutter web.
+
+## Wide viewports: desktop & web targets (all stacks)
+
+- **One frame is one width.** A desktop/web design must state breakpoint behavior; a single-width frame hides it, so the resize question goes to the decision gate. Verify at the design width plus one narrow and one wide stress width. "It's one fixed window size / don't overthink it" is pressure, not a decision — desktop windows resize by default, so fixed-vs-resizable, min-width, and the multi-width verification plan still reach the gate as explicit questions.
+- **Do not letterbox by accident.** A phone layout centered in a 1440px window is a defect unless the design shows exactly that; find the max-content-width + centering pattern and map it to the project's container primitive.
+- **Hover, focus-visible, and cursor affordances exist.** Inventory them per interactive element: hover style, pointer cursor, focus ring. Route unknowns to the gate; keyboard traversal is part of the design, not an extra.
+- **Scrollbars occupy layout on desktop.** Decide overlay vs layout-affecting before measuring; classic Windows/Linux scrollbars change full-bleed scroller peek math.
+- **Pointer precision does not shrink targets automatically.** 44pt/48dp touch targets stay unless the project has an established desktop density; mixed touch+mouse means keep touch targets unless the design says otherwise.
+- **Text weight verdicts come from tokens.** Desktop subpixel AA and hinting shift perceived weight against mobile frames; do not correct a token-mapped weight from cross-platform pixels.
+- **Density is target-specific.** Desktop is commonly @1x/@2x while mobile frames are @2x/@3x; recalibrate scale per target (`visual-analysis.md` §3), never reuse the mobile scale factor.
+
+## Computed-layout dump — numbers to numbers (all stacks)
+
+When the platform can dump computed layout, compare computed paddings/sizes against token-mapped expected values directly: pixels lie (AA, shadows, scaling), the layout tree does not. The dump complements, never replaces, the rendered comparison; a correct tree can still paint wrong.
+- **Flutter:** use `debugDumpRenderTree()` or the DevTools inspector; widget tests can assert `tester.getSize()` and `tester.getTopLeft()` against token values.
+- **Compose / Compose Multiplatform:** in Compose tests, use `onRoot().printToLog()` and bounds assertions such as `getBoundsInRoot()` / `assertWidthIsEqualTo`; when tests are unavailable, log measured values with `Modifier.onGloballyPositioned`.
+- **SwiftUI / UIKit:** use Xcode's view-hierarchy debugger; at a UIKit breakpoint, `po view.recursiveDescription`; in XCUITest, assert `frame` values for critical elements.
+- **Web targets:** use DevTools computed box model; in headless browser runs, query `getBoundingClientRect()` through CDP and compare the returned numbers.
+- **Check the numbers that matter.** Gaps/insets from the spacing inventory and every delta-table value scored `estimate` are worth dumping; a numeric dump upgrades confidence to measured.
 
 ## Full-bleed scroller within a padded screen (all stacks)
 
