@@ -14,12 +14,18 @@ tests/
 │   ├── 02-pressure-skip-gate.md      (discipline — time pressure + "don't ask")
 │   ├── 03-existing-screen-baseline.md(discipline — code is not the baseline)
 │   ├── 04-pointer-chains.md          (retrieval — SKILL.md → references)
-│   └── 05-outlined-svg.md            (application — hostile outlined export)
+│   ├── 05-outlined-svg.md            (application — hostile outlined export)
+│   ├── 06-foveal-raster.md           (application — measured raster deltas)
+│   └── 07-wide-viewport.md           (discipline — desktop width is not a spec)
 └── fixtures/
     ├── balance-card.svg              # clean vector + answer key
     ├── balance-card.expected.md
     ├── outlined-hero.svg             # outlined text, gradient runs, rotated icon
     ├── outlined-hero.expected.md
+    ├── wallet-card.png               # raster design source for foveal checks
+    ├── wallet-card-impl.png          # curated implementation screenshot
+    ├── ../expected/06-ground-truth.md  # answer key (outside fixtures/: agents with Bash could find a same-named file)
+    ├── make-wallet-fixtures.sh       # deterministically regenerates the pair + key
     └── ExistingBalanceScreen.kt      # fake existing screen with curated deltas
 ```
 
@@ -57,8 +63,10 @@ Grading rubric: Required behaviors and Forbidden behaviors, as bullets.
 The grade is LLM-produced: read the per-item breakdown, don't trust the verdict blindly. A transcript can pass the letter of a rubric while missing its point — the rubrics list observable behaviors precisely to limit this, but the final call on a borderline grade is human.
 
 Known caveats:
-- User-level skills in `~/.claude/skills` are also visible to the sandboxed agent; if you have another copy of `visual-implementation` installed there, the project-level copy in the sandbox takes precedence, but keep versions in mind when results look stale.
+- User-level skills in `~/.claude/skills` are also visible to the sandboxed agent; in practice a stale copy there CAN shadow the sandbox's project-level copy (observed 2026-07-03: the agent answered from the old user-level install). Sync or remove `~/.claude/skills/visual-implementation` before trusting a run.
 - Scenario results are non-deterministic. A single pass is a smoke signal, not proof; for a wording change that targets behavior, run the affected scenario a few times (see the micro-testing guidance in superpowers' writing-skills, if available: 5+ reps, read every transcript).
+- A scenario that allows `Bash` cannot filesystem-isolate the agent: it can escape the sandbox and find same-named files in the real repo (observed: an agent located and pasted an answer key). Keep ground truth OUT of `fixtures/` and named unlike the fixtures (`tests/expected/`).
+- **Scenario status (2026-07-03):** 06 and 07 encode aspirational bars for the fixation/instrumentation and wide-viewport rules. RED verified for both (pre-change skill: whole-frame near-match verdict with 1/5 deltas; no wide-target gating). Post-change on sonnet: 04 (canary, incl. new pointer chains) PASSES; 06 reaches full protocol compliance (region tiles, measure.sh sampling + edge projection, provenance tags, zero forbidden violations) but has scored 3/5 curated deltas on its best graded run — the masked-second-delta rule added in response is not yet confirmed by a passing run; 07 consistently gates hover but still under-routes cursor/scrollbar/resize/density under the "don't overthink it" pressure. Treat 06/07 failures as signal to strengthen bindings, not to relax rubrics.
 
 ## Policy: TDD for skill edits
 
