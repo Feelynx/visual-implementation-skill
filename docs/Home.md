@@ -1,6 +1,6 @@
 # Visual Implementation — Wiki
 
-Welcome. This wiki explains the **what**, **why**, and **how** of the Visual Implementation skill — a disciplined workflow for turning a visual source into design-system-grounded mobile UI.
+Welcome. This wiki explains the **what**, **why**, and **how** of the Visual Implementation skill — a disciplined workflow for turning a visual source into design-system-grounded mobile, desktop, and web UI.
 
 If you just want to install and go, read the [README](../README.md) and [Installation](Installation.md). If you want to understand how the skill thinks, start with [Concepts](Concepts.md).
 

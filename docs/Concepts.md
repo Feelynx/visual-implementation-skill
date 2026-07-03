@@ -16,12 +16,20 @@ The kind of source decides the extraction method:
 
 - **Named-token spec** (Figma styles/variables, an inspect/redline export, a values table) — the highest-priority source. Map token → token; do not re-derive a value the spec already names.
 - **Vector (SVG)** — parse exact values: colors, gradients, geometry, `viewBox`, effects. Do not eyeball it.
-- **Raster (PNG/JPG/screenshot)** — estimate perceptually, every value carrying a declared confidence.
+- **Raster (PNG/JPG/screenshot)** — instrument when tooling allows, estimate perceptually otherwise, every value carrying measured-vs-estimated provenance.
 - **Mixed** — vector chrome plus an embedded raster asset.
 
 ## Tokens over pixels
 
 A stated token gives size, weight, **and** line-height exactly. A pixel measurement does not — and is actively misleading for type, because character advance width is font-specific (a real 16sp run can measure like 14sp). So: ask for or look up the token first; measure only what no token names, and tag those values low-confidence.
+
+## Fixation over glance
+
+A whole-frame raster read is orientation, not evidence. The skill reads tiles and crops at native resolution, instruments color, gaps, cap-height, and contrast when possible, and tags each value as measured or estimated. Tiny hue shifts, spacing deltas, and AA/contrast failures are expected to surface region by region.
+
+## One frame is one width
+
+A desktop or web frame proves only the shown width. Hover, cursor, focus, scrollbar policy, min/max width, max-content width, and breakpoints are behavior a static frame cannot settle; the decision gate resolves them and verification captures multiple widths.
 
 ## Design-system grounding
 
@@ -34,7 +42,7 @@ Uncertainty is not hidden in the agent's head; it is surfaced as an **Agent Diff
 ## Two gates
 
 - **The decision gate** runs once, before implementation. It stops for things only the user can settle: missing assets, brand choices, copy, new shared components, asset-name collisions, behavior-changing shared edits, ambiguous interpretations. Mismatches the *source already decides* are fix-list items, not gate questions.
-- **The verification gate** runs at the end (and as a baseline at the start for existing screens). It is an **element × property delta table**: render your build, capture it at the source's dimensions and theme, and score every property of every element against the token-mapped source value. A passing compile is not verification.
+- **The verification gate** runs at the end (and as a baseline at the start for existing screens). It is an **element × property delta table** backed by ranked regional comparison: render your build, capture it at the source's dimensions and theme, re-read the worst tiles, and score every property of every element against the token-mapped source value. A passing compile is not verification.
 
 ## Additive vs behavioral shared edits
 

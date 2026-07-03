@@ -1,6 +1,6 @@
 # Non-Negotiables
 
-The hard rules, grouped by the failure each one prevents. The authoritative, numbered list (NN-1 … NN-30) lives in [`SKILL.md`](../visual-implementation/SKILL.md); this page explains the *why*. The recurring failures behind NN-8, NN-9 and NN-19 … NN-23 are kept, with their full reasoning, in [`references/failure-cases.md`](../visual-implementation/references/failure-cases.md).
+The hard rules, grouped by the failure each one prevents. The authoritative, numbered list (NN-1 … NN-32) lives in [`SKILL.md`](../visual-implementation/SKILL.md); this page explains the *why*. The recurring failures behind NN-8, NN-9 and NN-19 … NN-23 are kept, with their full reasoning, in [`references/failure-cases.md`](../visual-implementation/references/failure-cases.md).
 
 ## Sources of truth (NN-1 … NN-4)
 
@@ -9,13 +9,14 @@ The hard rules, grouped by the failure each one prevents. The authoritative, num
 - **No prior fidelity claim is evidence.** A commit message or a "1:1" note proves nothing; the rendered comparison does.
 - **Tokens outrank pixels.** When the source names a type/spacing/radius/colour token, map it to the project scale. Pixel estimation is a declared-uncertainty fallback — and it is biased *low* for type, because font advance width is narrower than generic estimates assume. A token-mapped value is corrected only by a different stated token, never by a ruler or a sampled hue.
 
-## Extraction fidelity (NN-5 … NN-9)
+## Extraction fidelity (NN-5 … NN-9, NN-31)
 
-- **Don't eyeball a vector.** Parse the SVG for exact colors, gradients, geometry, and `viewBox`.
+- **Don't eyeball a vector or an instrumentable raster.** Parse the SVG for exact colors, gradients, typography, geometry, and `viewBox`; instrument a raster when tooling allows with `scripts/measure.sh` and tag every value as measured or estimated.
 - **Calibrate scale before measuring.** Without a reference frame, image pixels cannot become real `dp`/`pt`; cluster observed values and snap them to the project scale.
 - **Rhythm-correct beats pixel-perfect.** Tokens, roles, constraints, and proportional relationships — not fixed literals.
 - **Never default prominent text to Bold.** Medium 500 and Bold 700 read almost identically in a raster; the exact weight token decides, and genuine ambiguity is asked, not assumed.
 - **The exact token, never a plausible neighbour.** A near-token is a defect; grep the theme for the exact value and use the token that carries it.
+- **No property verdict from a whole-frame read alone.** A raster is read region by region at native resolution (tiles / crops); a conclusion formed only at whole-frame scale is provisional until confirmed at native resolution. This prevents tiny hue, spacing, icon, and contrast errors from hiding in a scaled-down overview.
 
 ## Don't invent (NN-10 … NN-13)
 
@@ -49,8 +50,9 @@ The hard rules, grouped by the failure each one prevents. The authoritative, num
 - **Never bypass the decision gate** on anything that could materially change fidelity, reuse, accessibility, or maintainability — and never continue past a material risk with a silent placeholder, nearest asset, or lookalike font.
 - **The brief is screen-specific**, executable by another agent — not a generic plan.
 
-## Completion (NN-28 … NN-30)
+## Completion (NN-28 … NN-30, NN-32)
 
 - **A compile or build success is not visual completion**, and neither is rendering the *source* export. Completion requires rendering **your built screen** and comparing it to the source property by property — or telling the user rendering was impossible.
 - **An element is correct only after every property is checked** against the token-mapped source value; fixing only the deltas you happened to notice is not an audit.
 - **Never drive the user's device or emulator without permission** — it is often shared and mid-review. Read-only screenshots are fine; and confirm the build actually succeeded *before* committing.
+- **One frame is one width.** For desktop/web targets, hover/cursor/focus affordances, scrollbar policy, and resize/breakpoint behavior are gate items a static frame cannot decide, and verification captures more than one window width; a single-width match claim is not completion for a resizable target. This prevents a correct-looking 1440px frame from becoming a broken narrow or wide app.

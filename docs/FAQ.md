@@ -1,7 +1,10 @@
 # FAQ
 
 ### When should the skill activate?
-Whenever you implement or review a mobile UI from an external visual source — a PNG, SVG, Figma export, screenshot, or mockup — especially when fidelity depends on missing assets, unknown fonts, ambiguous scale, or mapping the design to a design system.
+Whenever you implement or review a mobile, desktop, or web UI from an external visual source — a PNG, SVG, Figma export, screenshot, or mockup — especially when fidelity depends on missing assets, unknown fonts, ambiguous scale, hover states, wide viewports, or mapping the design to a design system.
+
+### Does it support desktop and web?
+Yes, for desktop/web targets of the same stacks: Flutter desktop/web, Compose Multiplatform Desktop and web/wasm, and macOS SwiftUI. It is not a React/HTML skill. Wide-viewport behavior is gated and verified at multiple widths.
 
 ### Does it work without a design system?
 It is strongest with one, because it maps to tokens and components. Without one it still applies the workflow, but more values fall back to measured, declared-uncertainty estimates — and it will flag the absence as a risk.

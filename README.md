@@ -1,8 +1,8 @@
 # Visual Implementation
 
-> An agent skill that turns a visual source — PNG, SVG, Figma export, screenshot, or mockup — into **design-system-grounded mobile UI**, surfacing risks and decisions *before* coding and proving fidelity with a render-and-compare gate *after*.
+> An agent skill that turns a visual source — PNG, SVG, Figma export, screenshot, or mockup — into **design-system-grounded mobile, desktop, and web UI**, surfacing risks and decisions *before* coding and proving fidelity with a render-and-compare gate *after*.
 
-It is built for Flutter, Android (Jetpack Compose), iOS (SwiftUI / UIKit), and Kotlin Multiplatform / Compose Multiplatform projects.
+It is built for Flutter (including desktop/web), Android (Jetpack Compose), iOS/macOS (SwiftUI / UIKit), and Kotlin Multiplatform / Compose Multiplatform projects.
 
 ---
 
@@ -15,6 +15,7 @@ Implementing a screen from a screenshot usually goes wrong in predictable ways:
 - an icon is matched by **filename** and ships rotated or mirrored;
 - a reusable row is rebuilt inline instead of becoming a shared component;
 - a shared component gets a behavior-changing edit to fix one screen;
+- eyeballed rasters and whole-frame glances ship subtle color, spacing, contrast, or content deltas;
 - "it compiles" is mistaken for "it looks right".
 
 This skill encodes a disciplined workflow that turns each of those traps into a checked step.
@@ -45,18 +46,20 @@ Each phase produces a structured artifact (see the [output schemas](visual-imple
 - **Assets are verified by content, not filename** — orientation, rotation, mirror, color, `viewBox`.
 - **Shared-component edits are classified** — additive default-no-op extensions are allowed; behavior-changing edits are gated.
 - **Completion = render your build and compare it to the source property by property** — a passing build proves nothing about copy, color, weight, spacing, or geometry.
+- **Measured beats eyeballed.** Raster values are tagged by provenance: instrumented measurement when tooling exists, declared-uncertainty estimate otherwise.
+- **Verdicts are regional.** Whole-frame comparison orients the review; region-ranked tiles and foveal crops decide the deltas.
 - **Speak the user's language**, surface uncertainty as a risk ledger, and never invent assets, copy, or content hidden behind a crop.
 
 ---
 
 ## Supported stacks
 
-| Stack | UI layer |
-| --- | --- |
-| Flutter | Widgets, `ThemeData`, design tokens |
-| Android | Jetpack Compose, `MaterialTheme`, project tokens |
-| iOS | SwiftUI / UIKit, asset catalogs, type styles |
-| Multiplatform | Kotlin Multiplatform / Compose Multiplatform shared UI |
+| Stack | UI layer | Targets |
+| --- | --- | --- |
+| Flutter | Widgets, `ThemeData`, design tokens | Mobile, desktop, web |
+| Android | Jetpack Compose, `MaterialTheme`, project tokens | Phones, tablets, foldables, Chrome OS |
+| iOS/macOS | SwiftUI / UIKit, asset catalogs, type styles | iPhone/iPad, macOS native or Catalyst |
+| Multiplatform | Kotlin Multiplatform / Compose Multiplatform shared UI | Mobile shared UI, Desktop JVM, web/wasm |
 
 ---
 
@@ -110,7 +113,8 @@ visual-implementation/
 │   └── openai.yaml               # runtime manifest (display name, prompt)
 ├── scripts/
 │   ├── capture.sh                # read-only device/simulator screenshot
-│   └── compare.sh                # scale + side-by-side + pixel diff
+│   ├── compare.sh                # scale + side-by-side + pixel diff + ranked regional report
+│   └── measure.sh                # raster color, crop, tile, edge, cap-height, contrast measurements
 └── references/
     ├── visual-analysis.md        # extracting design intent from a source
     ├── output-schemas.md         # the structured artifacts each phase emits
