@@ -22,7 +22,7 @@ No — it is honesty. If the project has no preview/simulator/screenshot path, t
 Only carefully. If the target name already exists, it checks who references it: identical content → reuse; only this screen → overwrite after you confirm; referenced elsewhere → it asks whether to overwrite globally or install under a new name.
 
 ### Which runtimes does it support?
-Any agent runtime that loads folder-based skills. See [Installation](Installation.md) for Claude Code and Codex paths; other runtimes follow the same copy-the-folder pattern.
+Any agent runtime that loads folder-based skills. See [Installation](Installation.md) for Claude Code, Codex, and OpenCode paths; other runtimes follow the same copy-the-folder pattern.
 
 ### How do I keep it lean when contributing?
 Prefer tightening an existing rule to adding a new one, and ground every change in a concrete failure it prevents. The skill's strength is precision, not length.

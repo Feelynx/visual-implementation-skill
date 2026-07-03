@@ -29,6 +29,16 @@ cp -R visual-implementation ~/.codex/skills/visual-implementation
 
 The folder ships an `agents/openai.yaml` manifest (display name and default prompt) that the runtime reads.
 
+## OpenCode
+
+Skills live in `~/.config/opencode/skills/`.
+
+```bash
+cp -R visual-implementation ~/.config/opencode/skills/visual-implementation
+```
+
+OpenCode also discovers skills installed in `~/.claude/skills/`, so if the skill is already installed for Claude Code, no second copy is needed. Project-level installs work too, via `.opencode/skills/`.
+
 ## Other skill-aware runtimes
 
 Any runtime that loads folder-based skills can use it: copy `visual-implementation/` into that runtime's skills directory. The contract lives in `SKILL.md`; the `references/*.md` files are loaded on demand.
@@ -39,7 +49,7 @@ Pull the latest and re-copy:
 
 ```bash
 git pull
-cp -R visual-implementation ~/.claude/skills/visual-implementation     # and/or ~/.codex/skills/...
+cp -R visual-implementation ~/.claude/skills/visual-implementation     # and/or ~/.codex/skills/..., ~/.config/opencode/skills/...
 ```
 
 Re-copying overwrites the installed `SKILL.md` and `references/`. If your runtime keeps an install manifest beside the skill (for example a plugin descriptor), it is preserved as long as you copy *into* the existing folder rather than replacing it wholesale.
@@ -58,6 +68,7 @@ A clean `diff` (ignoring any runtime-added manifest) means the installed copy ma
 ```bash
 rm -rf ~/.claude/skills/visual-implementation
 rm -rf ~/.codex/skills/visual-implementation
+rm -rf ~/.config/opencode/skills/visual-implementation
 ```
 
 ## Notes

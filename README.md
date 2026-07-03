@@ -77,6 +77,14 @@ cp -R visual-implementation-skill/visual-implementation ~/.claude/skills/visual-
 cp -R visual-implementation-skill/visual-implementation ~/.codex/skills/visual-implementation
 ```
 
+### OpenCode
+
+```bash
+cp -R visual-implementation-skill/visual-implementation ~/.config/opencode/skills/visual-implementation
+```
+
+OpenCode also reads `~/.claude/skills/`, so a Claude Code install is discovered automatically.
+
 Restart the runtime (or start a new session) so the skill is discovered.
 
 > Full details, updating, and uninstalling: **[docs/Installation.md](docs/Installation.md)**.
